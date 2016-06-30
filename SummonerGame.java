@@ -7,6 +7,7 @@ import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.maps.tiled.TiledMapRenderer;
@@ -41,6 +42,9 @@ public class SummonerGame extends ApplicationAdapter {
 	private BitmapFont font;
 
 	private NPCHandler npcHandler;
+	private MenuHandler menuHandler;
+
+	private String text = "ABCD EFGH IJKL MNOP QRST UVWX YZ";
 
 	@Override
 	public void create () {
@@ -48,8 +52,10 @@ public class SummonerGame extends ApplicationAdapter {
 		FileHandle fh = new FileHandle(fontName);
 		generator = new FreeTypeFontGenerator(fh);
 		parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
-		parameter.size = 25;
+		parameter.size = 30;
 		font = generator.generateFont(parameter);
+
+		menuHandler = new MenuHandler();
 
 
 		prefs = Gdx.app.getPreferences("BoxmonSave");
@@ -60,10 +66,13 @@ public class SummonerGame extends ApplicationAdapter {
 		world = new World(npcParser);
 		camera = new OrthographicCamera(WIDTH, HEIGHT);
 		tiledMapRenderer = world.getTiledMapRenderer();
-		player = new Player(prefs, world);
+		player = new Player(prefs, world, menuHandler);
 		camera.zoom = (float)0.5;
 
 		npcHandler = new NPCHandler(batch);
+
+		menuHandler.setPlayer(player);
+		font.setColor(0f,0f,0f,1f);
 
 	}
 
@@ -95,8 +104,17 @@ public class SummonerGame extends ApplicationAdapter {
 			npcs[0].getSprite().draw(batch);
 		}
 
-		//font.setColor(1.0f,1.0f,1.0f,1.0f);
-		//font.draw(batch,"Dicks", 4*64, 6*64);
+		Sprite[] sprites = menuHandler.getSprites();
+
+		for(int i = 0; i < sprites.length; i++){
+			sprites[i].draw(batch);
+		}
+		if ( menuHandler.getState() == MenuHandler.states.INCHAT) {
+			text = menuHandler.getChat();
+			for (int i = 0; i < text.length(); i++) {
+				font.draw(batch, "" + text.charAt(i), player.getX() - 300 + (i * 15), player.getY() - 160);
+			}
+		}
 		batch.end();
 	}
 	public void dispose()

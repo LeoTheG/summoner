@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 
 import java.io.File;
+import java.util.ArrayList;
 
 /**
  * Created by Leonar on 6/18/2015.
@@ -21,6 +22,9 @@ public class NPC implements Comparable<NPC> {
     private int mapID;
     private Sprite sprite;
     private String name;
+    private String currentChat = "";
+
+    private ArrayList<String> chat;
 
     protected final static int TILE_LENGTH = 64;
 
@@ -42,6 +46,8 @@ public class NPC implements Comparable<NPC> {
         sprite.setX(x);
         sprite.setY(y);
         direction = 0;
+
+        chat = new ArrayList<String>();
     }
     public NPC(int ID)
     {
@@ -70,6 +76,14 @@ public class NPC implements Comparable<NPC> {
     }
     public void setZ(int i){
         z = i;
+    }
+
+    public void addChat(String s){
+        chat.add(s);
+        currentChat = chat.get(0);
+    }
+    public String getChat(){
+        return currentChat;
     }
 
 }

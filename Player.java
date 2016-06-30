@@ -39,13 +39,16 @@ public class Player {
     private Preferences prefs;
     //The World that everything resides
     private World world;
+
+    private MenuHandler menuHandler;
     /** Constructor for Player, sets up initial variables
      * @param p - the Preferences object of BoxmonGame (used for loading information about Player
      */
-    public Player(Preferences p, World w)
+    public Player(Preferences p, World w, MenuHandler m)
     {
         world = w;
         prefs = p;
+        menuHandler = m;
         x = prefs.getInteger("playerX", 0);
         y = prefs.getInteger("playerY", 0);
         direction = prefs.getInteger("playerDirection");
@@ -183,12 +186,7 @@ public class Player {
         {
             numSKeyPressed = 0;
         }
-        if(Gdx.input.isKeyPressed(Input.Keys.SPACE)){
-            numSPACEKeyPressed++;
-        }
-        else{
-            numSPACEKeyPressed = 0;
-        }
+
     }
     //TODO: after NPCs are added, check for NPC collision
     private boolean canMove(int dir)
@@ -198,6 +196,11 @@ public class Player {
         int maxHeight = world.getCurrentMap().getDimensions()[1];
         int playerX   = x/TILE_LENGTH;
         int playerY   = y/TILE_LENGTH;
+
+
+        if ( menuHandler.getState() == MenuHandler.states.INCHAT ){
+            return false;
+        }
 
         //checks if the block to which Player is attempting to move is valid (i.e. within bounds)
         if(dir == FORWARD)
@@ -220,11 +223,9 @@ public class Player {
             if ( world.occupied(new Point(playerX-1, playerY))) return false;
             return playerX -1 >= 0;
         }
-        return false;
-    }
-    public void spaceHandler(){
-        // check if menu is allowed to appear
 
+
+        return false;
     }
     /* Handles player movement by checking keys pressed, how long they are pressed, and the direction of the player
      * Also handles rotation of player and playerSprite's x & y values
@@ -241,10 +242,21 @@ public class Player {
         if(!isMoving()) {
 
             if (Gdx.input.isKeyPressed(Input.Keys.SPACE)){
-                if ( numSPACEKeyPressed > KEY_SENSITIVITY ) {
+                if ( numSPACEKeyPressed == 0 ) {
+                    // look for what tile player is facing
+                    NPC npc = world.checkSpot(x/TILE_LENGTH,y/TILE_LENGTH,direction);
+                    if ( npc != null ){
+                        menuHandler.setChat(npc.getChat());
+                    }
+                    else
+                        menuHandler.setChat("");
+                    menuHandler.pressedSpace();
+                    numSPACEKeyPressed = 1;
+                    System.out.println("Pressed space");
 
                 }
             }
+            else numSPACEKeyPressed = 0;
             if (Gdx.input.isKeyPressed(Input.Keys.W)) {
 
                 if(direction == FORWARD && numWKeyPressed > KEY_SENSITIVITY) {
@@ -253,7 +265,9 @@ public class Player {
                 }
 
                 else {
-                    changeDirection(FORWARD);
+                    if (menuHandler.getState() == MenuHandler.states.FREE) {
+                        changeDirection(FORWARD);
+                    }
                     moveCounterUp = 0;
                 }
                 return;
@@ -265,7 +279,9 @@ public class Player {
                         moveCounterDown = TILE_LENGTH/4;
                 }
                 else {
-                    changeDirection(BACKWARD);
+                    if (menuHandler.getState() == MenuHandler.states.FREE) {
+                        changeDirection(BACKWARD);
+                    }
                     moveCounterDown = 0;
                 }
                 return;
@@ -277,7 +293,9 @@ public class Player {
                         moveCounterLeft = TILE_LENGTH/4;
                 }
                 else {
-                    changeDirection(LEFT);
+                    if (menuHandler.getState() == MenuHandler.states.FREE) {
+                        changeDirection(LEFT);
+                    }
                     moveCounterLeft = 0;
                 }
                 return;
@@ -289,7 +307,9 @@ public class Player {
                         moveCounterRight = TILE_LENGTH/4;
                 }
                 else {
-                    changeDirection(RIGHT);
+                    if (menuHandler.getState() == MenuHandler.states.FREE) {
+                        changeDirection(RIGHT);
+                    }
                     moveCounterRight = 0;
                 }
                 return;

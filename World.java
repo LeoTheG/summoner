@@ -15,8 +15,9 @@ public class World {
 
     private Map currentMap;
     private int currentMapIndex;
-    public List<Point> points = new ArrayList<Point>();
+    public List<Spot> spots = new ArrayList<Spot>();
     private NPCParser npcParser;
+    private static final int FORWARD = 0, RIGHT = 1, BACKWARD = 2, LEFT = 3; //player's direction constants
 
     private Map[] maps = { new Map("maps\\house2.tmx", 0)
 
@@ -30,7 +31,8 @@ public class World {
         currentMap = maps[currentMapIndex]; //begin inside map house1
         npcParser.parse();
         npcs = npcParser.npcs;
-        points.add( new Point( npcs[0].x, npcs[0].y ));
+        System.err.println("Added spot with x = " + npcs[0].x + " and y = " + npcs[0].y);
+        spots.add( new Spot(new Point(npcs[0].x,npcs[0].y), npcs[0]));
     }
     public Map getCurrentMap()
     {
@@ -52,10 +54,62 @@ public class World {
     }
 
     public boolean occupied(Point p){
-        for ( int i = 0; i < points.size(); i++ ) {
-            if ( p.x == points.get(i).x && p.y == points.get(i).y) return true;
+        for ( int i = 0; i < spots.size(); i++ ) {
+            if ( p.x == spots.get(i).x && p.y == spots.get(i).y) return true;
         }
         return false;
     }
+    // check NPC at point in map
+    public NPC checkSpot(Point p, int direction){
+        for ( int i = 0; i < spots.size(); i++){
+            if ( spots.get(i).point == p ){
+                return spots.get(i).npc;
+            }
+        }
+        return (NPC) null;
+    }
+    public NPC checkSpot(int x, int y, int direction){
+        Point p = null;
 
+        switch(direction){
+            case FORWARD:
+                p = new Point(x,y+1);
+                break;
+            case LEFT:
+                p = new Point(x-1,y);
+                break;
+            case RIGHT:
+                p = new Point(x+1,y);
+                break;
+            case BACKWARD:
+                p = new Point(x,y-1);
+                break;
+        }
+
+        System.err.println("Checking spot " + p.x + ", " + p.y);
+
+        for ( int i = 0; i < spots.size(); i++){
+            if ( spots.get(i).point.equals(p) ){
+                System.out.println("Returning NPC");
+                return spots.get(i).npc;
+            }
+        }
+        System.err.println("Returning null");
+        return (NPC) null;
+    }
+
+}
+
+class Spot{
+    public NPC npc;
+    public Point point;
+    public int x;
+    public int y;
+
+    Spot(Point p, NPC npc){
+        this.npc = npc;
+        this.point = p;
+        x = p.x;
+        y = p.y;
+    }
 }

@@ -13,4 +13,7 @@ public class Point {
       this.x = x;
       this.y = y;
    }
+   public boolean equals(Point p){
+      return ( p.x == x && p.y == y );
+   }
 }

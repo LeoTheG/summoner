@@ -27,20 +27,21 @@ public class NPCParser {
       int y = 0;
       String texturePath = null;
       int MAPID = 0;
+      String chat = "";
 
       try {
          in = new BufferedReader(new FileReader("characters\\NPCS\\NPCS.txt"));
          line = in.readLine();
          int posID = line.indexOf("ID") + "ID".length();
          ID = Integer.parseInt(line.substring(posID), 10);
-         System.out.println("ID = " + ID);
+         System.err.println("ID = " + ID);
       }
       catch(Exception e){System.err.println(e.getMessage());}
 
       int i = 1;
 
       //Stores values of NPCs file into variables
-      while(i < 6 )
+      while(i < 7 )
       {
          try {
             line = in.readLine();
@@ -69,12 +70,17 @@ public class NPCParser {
                MAPID = Integer.parseInt(line.substring(posMAPID));
                System.err.println("MapID = " + MAPID);
             }
+            else if ( i == 6 ) {
+               chat = line;
+               System.err.println("chat: " + chat);
+            }
 
          }
          catch(Exception e2){}
          i++;
       }
       NPC npc = new NPC(ID,x,y,MAPID,texturePath,name);
+      npc.addChat(chat);
 
       npcs[0] = npc;
    }
