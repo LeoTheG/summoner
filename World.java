@@ -54,8 +54,11 @@ public class World {
     }
 
     public boolean occupied(Point p){
+
         for ( int i = 0; i < spots.size(); i++ ) {
-            if ( p.x == spots.get(i).x && p.y == spots.get(i).y) return true;
+            if ( p.x == spots.get(i).x && p.y == spots.get(i).y){
+                return true;
+            }
         }
         return false;
     }
@@ -87,7 +90,7 @@ public class World {
         }
 
         System.err.println("Checking spot " + p.x + ", " + p.y);
-
+        System.out.println("Tile: " + currentMap.getTileName(p.x,p.y));
         for ( int i = 0; i < spots.size(); i++){
             if ( spots.get(i).point.equals(p) ){
                 System.out.println("Returning NPC");

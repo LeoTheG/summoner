@@ -205,23 +205,45 @@ public class Player {
         //checks if the block to which Player is attempting to move is valid (i.e. within bounds)
         if(dir == FORWARD)
         {
+
             if ( world.occupied(new Point(playerX, playerY+1))) return false;
-            return playerY + 1 < maxHeight;
+
+            String tileName = world.getCurrentMap().getTileName(playerX,playerY+1);
+
+            if ( tileName != null && tileName.equals("black")) return false;
+
+            //return playerY + 1 < maxHeight;
+            return true;
         }
         if(dir == BACKWARD)
         {
             if ( world.occupied(new Point(playerX, playerY-1))) return false;
-            return playerY - 1 >= 0;
+
+            String tileName = world.getCurrentMap().getTileName(playerX,playerY-1);
+
+            if ( tileName != null && tileName.equals("black")) return false;
+            return true;
+            //return playerY - 1 >= 0;
         }
         if(dir == RIGHT)
         {
             if ( world.occupied(new Point(playerX+1, playerY))) return false;
-            return playerX + 1 < maxWidth;
+
+            String tileName = world.getCurrentMap().getTileName(playerX+1,playerY);
+
+            if ( tileName != null && tileName.equals("black")) return false;
+            return true;
+            //return playerX + 1 < maxWidth;
         }
         if(dir == LEFT)
         {
             if ( world.occupied(new Point(playerX-1, playerY))) return false;
-            return playerX -1 >= 0;
+
+            String tileName = world.getCurrentMap().getTileName(playerX-1,playerY);
+
+            if ( tileName != null && tileName.equals("black")) return false;
+            return true;
+            //return playerX -1 >= 0;
         }
 
 

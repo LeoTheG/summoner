@@ -20,6 +20,7 @@ public class Map {
     private int height;
 
     private TiledMapRenderer tiledMapRenderer;
+    private TiledMapTileLayer tiledMapTileLayer;
 
 
     public Map(String fileName, int ID)
@@ -28,7 +29,8 @@ public class Map {
         this.ID = ID;
 
         TiledMap tiledMap = new TmxMapLoader().load(this.fileName);
-        TiledMapTileLayer tiledMapTileLayer = (TiledMapTileLayer) tiledMap.getLayers().get(0);
+
+        tiledMapTileLayer = (TiledMapTileLayer) tiledMap.getLayers().get(0);
         tiledMapRenderer = new OrthogonalTiledMapRenderer(tiledMap);
 
         width = tiledMapTileLayer.getWidth();
@@ -46,5 +48,14 @@ public class Map {
     public TiledMapRenderer getTiledMapRenderer()
     {
         return tiledMapRenderer;
+    }
+
+    public String getTileName(int x, int y){
+
+        System.err.println("--Checking spot: " + x + ", " + y );
+
+        TiledMapTileLayer.Cell cell = tiledMapTileLayer.getCell(x,y);
+
+        return (String) cell.getTile().getProperties().get("Name");
     }
 }

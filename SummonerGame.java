@@ -4,6 +4,7 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.files.FileHandle;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -46,13 +47,21 @@ public class SummonerGame extends ApplicationAdapter {
 
 	private String text = "ABCD EFGH IJKL MNOP QRST UVWX YZ";
 
+	public float textDrawLength = 0.0f;
+	public static float TEXTSPEED = 0.5f;
+
+
 	@Override
 	public void create () {
 
 		FileHandle fh = new FileHandle(fontName);
+
 		generator = new FreeTypeFontGenerator(fh);
 		parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
-		parameter.size = 30;
+		parameter.size = 45;
+		parameter.borderColor = Color.BLACK;
+		parameter.kerning = true;
+		parameter.spaceY = 100000;
 		font = generator.generateFont(parameter);
 
 		menuHandler = new MenuHandler();
@@ -111,9 +120,17 @@ public class SummonerGame extends ApplicationAdapter {
 		}
 		if ( menuHandler.getState() == MenuHandler.states.INCHAT) {
 			text = menuHandler.getChat();
-			for (int i = 0; i < text.length(); i++) {
-				font.draw(batch, "" + text.charAt(i), player.getX() - 300 + (i * 15), player.getY() - 160);
+
+			if ((int)textDrawLength < text.length())
+			{
+				textDrawLength+=(0.5f*TEXTSPEED);
 			}
+
+			if ( (int)textDrawLength < text.length() ) textDrawLength +=(0.5f*TEXTSPEED);
+			font.draw(batch, text.substring(0, (int)textDrawLength), player.getX() - 300 + 15, player.getY() - 160);
+		}
+		if ( menuHandler.getState() == MenuHandler.states.FREE ){
+			textDrawLength = 0;
 		}
 		batch.end();
 	}
