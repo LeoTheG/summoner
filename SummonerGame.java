@@ -90,6 +90,8 @@ public class SummonerGame extends ApplicationAdapter {
 		Gdx.gl.glClearColor(0, 0, 0, 0);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+		tiledMapRenderer = world.getTiledMapRenderer();
+
 		//camera
 		camera.position.set(player.getX(), player.getY(), 0);
 		camera.update();

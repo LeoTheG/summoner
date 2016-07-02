@@ -19,8 +19,8 @@ public class World {
     private NPCParser npcParser;
     private static final int FORWARD = 0, RIGHT = 1, BACKWARD = 2, LEFT = 3; //player's direction constants
 
-    private Map[] maps = { new Map("maps\\house2.tmx", 0)
-
+    private Map[] maps = { new Map("maps\\house2.tmx", 0),
+                           new Map("maps\\outside1.tmx", 1)
                          };
     private NPC[] npcs;
 
@@ -39,14 +39,24 @@ public class World {
         return currentMap;
     }
     public int getCurrentMapIndex() { return currentMapIndex; }
-    public void changeMap(String flag)
+    // changes the map to ID given
+    // also returns point which should be updated point of player in new map
+    public Point changeMap(int ID)
     {
-        /*
-        if ( flag.equals("map1_entrance"))
-        {
-            //currentMap = new Map(new File("..\\assets\\house1.map"));
+        currentMap = maps[ID];
+        currentMap.updateTiledMapRenderer();
+
+        Point p = null;
+
+        switch (ID){
+            case 0:
+                p = new Point(8,1);
+                break;
+            case 1:
+                p = new Point(3,5);
+                break;
         }
-        */
+        return p;
     }
     public TiledMapRenderer getTiledMapRenderer()
     {
@@ -89,7 +99,7 @@ public class World {
                 break;
         }
 
-        System.err.println("Checking spot " + p.x + ", " + p.y);
+        //System.err.println("Checking spot " + p.x + ", " + p.y);
         System.out.println("Tile: " + currentMap.getTileName(p.x,p.y));
         for ( int i = 0; i < spots.size(); i++){
             if ( spots.get(i).point.equals(p) ){

@@ -51,6 +51,8 @@ public class Player {
         menuHandler = m;
         x = prefs.getInteger("playerX", 0);
         y = prefs.getInteger("playerY", 0);
+        //x = 2;
+        //y = 2;
         direction = prefs.getInteger("playerDirection");
         init();
     }
@@ -192,68 +194,62 @@ public class Player {
     private boolean canMove(int dir)
     {
 
-        int maxWidth  = world.getCurrentMap().getDimensions()[0];
-        int maxHeight = world.getCurrentMap().getDimensions()[1];
         int playerX   = x/TILE_LENGTH;
         int playerY   = y/TILE_LENGTH;
 
-
+        // player cannot move when chatting
         if ( menuHandler.getState() == MenuHandler.states.INCHAT ){
             return false;
         }
 
         //checks if the block to which Player is attempting to move is valid (i.e. within bounds)
-        if(dir == FORWARD)
-        {
 
-            if ( world.occupied(new Point(playerX, playerY+1))) return false;
+        int newX = 0;
+        int newY = 0;
 
-            String tileName = world.getCurrentMap().getTileName(playerX,playerY+1);
-
-            if ( tileName != null && tileName.equals("black")) return false;
-
-            //return playerY + 1 < maxHeight;
-            return true;
+        if ( dir == FORWARD ) {
+            newX = playerX;
+            newY = playerY + 1;
         }
-        if(dir == BACKWARD)
-        {
-            if ( world.occupied(new Point(playerX, playerY-1))) return false;
-
-            String tileName = world.getCurrentMap().getTileName(playerX,playerY-1);
-
-            if ( tileName != null && tileName.equals("black")) return false;
-            return true;
-            //return playerY - 1 >= 0;
+        else if ( dir == BACKWARD ) {
+            newX = playerX;
+            newY = playerY-1;
         }
-        if(dir == RIGHT)
-        {
-            if ( world.occupied(new Point(playerX+1, playerY))) return false;
-
-            String tileName = world.getCurrentMap().getTileName(playerX+1,playerY);
-
-            if ( tileName != null && tileName.equals("black")) return false;
-            return true;
-            //return playerX + 1 < maxWidth;
+        else if ( dir == LEFT ) {
+            newX = playerX-1;
+            newY = playerY;
         }
-        if(dir == LEFT)
-        {
-            if ( world.occupied(new Point(playerX-1, playerY))) return false;
+        else if ( dir == RIGHT ) {
+            newX = playerX + 1;
+            newY = playerY;
+        }
 
-            String tileName = world.getCurrentMap().getTileName(playerX-1,playerY);
+        if ( world.occupied(new Point(newX, newY))) return false;
 
-            if ( tileName != null && tileName.equals("black")) return false;
-            return true;
-            //return playerX -1 >= 0;
+        String tileName = world.getCurrentMap().getTileName(newX,newY);
+        String tilePassable = world.getCurrentMap().getPassable(newX,newY);
+
+        if ( tileName != null && tileName.equals("black")) return false;
+
+        if ( world.getCurrentMap().getPassable(newX,newY) != null ) return false;
+        int doorID = world.getCurrentMap().getDoorID(newX, newY);
+
+        if ( doorID >= 0 ) {
+            System.err.println("Changing map to " + doorID);
+            Point p = world.changeMap(doorID);
+            System.err.println("Changing player x and y to " + p.x + ", " + p.y );
+            x = p.x * TILE_LENGTH; y = p.y * TILE_LENGTH;
         }
 
 
-        return false;
+        return true;
     }
     /* Handles player movement by checking keys pressed, how long they are pressed, and the direction of the player
      * Also handles rotation of player and playerSprite's x & y values
      */
     public void moveHandler()
     {
+
         for ( int i = 0; i < 4; i++ ) {
             playerSprites[i].setX(x);
             playerSprites[i].setY(y);
@@ -337,6 +333,7 @@ public class Player {
                 return;
             }
         }
+
         if(moveCounterUp != 0)
         {
             moveCounterUp--;
@@ -361,97 +358,13 @@ public class Player {
             move(RIGHT);
             isMoving = true;
         }
+
     }
     /** Changes direction of the player
      * @param dir - the direction to which the player is attempting to change (an integer value of 4 possibilities 0 through 3)
      */
     public void changeDirection(int dir)
     {
-        /*
-        if(direction == FORWARD)
-        {
-            playerSprite = new Sprite(textures[2]);
-            /*
-            switch(dir)
-            {
-                case FORWARD:
-                    break;
-                case RIGHT:
-                    //playerSprite.rotate(270);
-                    playerSprite.rotate(270);
-                    break;
-                case BACKWARD:
-                    playerSprite.rotate(180);
-                    break;
-                case LEFT:
-                    playerSprite.rotate(90);
-                    break;
-            }
-
-
-        }
-        else if(direction == RIGHT)
-        {
-            playerSprite = new Sprite(textures[1]);
-            /*
-            switch(dir)
-            {
-                case FORWARD:
-                    playerSprite.rotate(90);
-                    break;
-                case RIGHT:
-                    break;
-                case BACKWARD:
-                    playerSprite.rotate(270);
-                    break;
-                case LEFT:
-                    playerSprite.rotate(180);
-                    break;
-            }
-
-        }
-        else if(direction == BACKWARD)
-        {
-            playerSprite = new Sprite(textures[0]);
-            /*
-            switch(dir)
-            {
-                case FORWARD:
-                    playerSprite.rotate(180);
-                    break;
-                case RIGHT:
-                    playerSprite.rotate(90);
-                    break;
-                case BACKWARD:
-                    break;
-                case LEFT:
-                    playerSprite.rotate(270);
-                    break;
-            }
-
-        }
-        else if(direction == LEFT)
-        {
-            playerSprite = new Sprite(textures[3]);
-            /*
-            switch(dir)
-            {
-                case FORWARD:
-                    playerSprite.rotate(270);
-                    break;
-                case RIGHT:
-                    playerSprite.rotate(180);
-                    break;
-                case BACKWARD:
-                    playerSprite.rotate(90);
-                    break;
-                case LEFT:
-                    break;
-            }
-
-        }
-        */
-
         direction = dir;
     }
     /* Determines whether or not the player is moving based off of the moveCounters (all must be 0 to be considered stationary, else moving) */
