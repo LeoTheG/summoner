@@ -2,86 +2,136 @@ package gharib.leonar.summoner;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 
 /* Author       : Leonar Gharib
    Date Created : 6/24/2016
    Purpose      :
 */
+//TODO: Begin NPCS.txt with # representing number of NPCS
+//TODO: Begin every section with # of NPCs in that map
+//TODO: Better parse NPCS
 public class NPCParser {
 
+   private static String ID = "ID";
+   private static String NAME = "NAME";
+   private static String X = "X";
+   private static String Y = "Y";
+   private static String TEXTURE = "TEXTURE";
+   private static String MAPID = "MAPID";
+
+   private ArrayList<ArrayList<Integer>> npcList = new ArrayList<ArrayList<Integer>>();
+   private ArrayList<NPC> npcs = new ArrayList<NPC>();
+
    public int numNPCs;
-   public NPC[] npcs;
+   //public NPC[] npcs;
 
    public NPCParser(){
       numNPCs = 1;
-      npcs = new NPC[numNPCs];
+      //npcs = new NPC[numNPCs];
+      //npcs = new NPC[numNPCs];
    }
 
    public void parse(){
+      System.err.println("Parsing");
       String line = null;
       BufferedReader in = null;
 
-      int ID = 0;
-      String name = null;
-      int x = 0;
-      int y = 0;
-      String texturePath = null;
-      int MAPID = 0;
-      String chat = "";
+      int i = 0;
 
-      try {
+      int numTotalNPCs = 0;
+      int NPCID = 0;
+      String NPCName = "";
+      int NPCX = 0;
+      int NPCY = 0;
+      String NPCTexture = "";
+      int NPCMapID = 0;
+      String NPCText = "";
+
+      try{
          in = new BufferedReader(new FileReader("characters\\NPCS\\NPCS.txt"));
-         line = in.readLine();
-         int posID = line.indexOf("ID") + "ID".length();
-         ID = Integer.parseInt(line.substring(posID), 10);
-         System.err.println("ID = " + ID);
       }
-      catch(Exception e){System.err.println(e.getMessage());}
+      catch(Exception e){}
 
-      int i = 1;
+      int pos = 0;
 
-      //Stores values of NPCs file into variables
-      while(i < 7 )
-      {
+      while ( i < 10 ){
          try {
             line = in.readLine();
-            if ( i == 1 ) {
-               int posNAME = line.indexOf("NAME") + "NAME".length();
-               name = line.substring(posNAME);
-               System.err.println("Name = " + name);
-            }
-            else if ( i == 2 ){
-               int posX = line.indexOf("X") + "X".length();
-               x = Integer.parseInt(line.substring(posX), 10);
-               System.err.println("X = " + x);
-            }
-            else if ( i == 3 ) {
-               int posY = line.indexOf("Y") + "Y".length();
-               y = Integer.parseInt(line.substring(posY), 10);
-               System.err.println("y = " + y);
-            }
-            else if ( i == 4 ) {
-               int posTexture = line.indexOf("TEXTURE") + "TEXTURE".length();
-               texturePath = line.substring(posTexture);
-               System.err.println("texturePath = " + texturePath);
-            }
-            else if ( i == 5 ) {
-               int posMAPID = line.indexOf("MAPID") + "MAPID".length();
-               MAPID = Integer.parseInt(line.substring(posMAPID));
-               System.err.println("MapID = " + MAPID);
-            }
-            else if ( i == 6 ) {
-               chat = line;
-               System.err.println("chat: " + chat);
-            }
 
+            // parse first line -- # total NPCS
+            if (i == 0) {
+               numTotalNPCs = Integer.parseInt(line);
+            }
+            // parse second line -- blank
+            else if (i == 1) ;
+               // parse third line -- ID
+            else if (i == 2) {
+               pos = line.indexOf(ID) + ID.length();
+               NPCID = Integer.parseInt(line.substring(pos));
+            } else if (i == 3) {
+               pos = line.indexOf(NAME) + NAME.length();
+               NPCName = line.substring(pos);
+            } else if (i == 4) {
+               pos = line.indexOf(X) + X.length();
+               NPCX = Integer.parseInt(line.substring(pos));
+            } else if (i == 5) {
+               pos = line.indexOf(Y) + Y.length();
+               NPCY = Integer.parseInt(line.substring(pos));
+            } else if (i == 6) {
+               pos = line.indexOf(TEXTURE) + TEXTURE.length();
+               NPCTexture = line.substring(pos);
+            } else if (i == 7) {
+               pos = line.indexOf(MAPID) + MAPID.length();
+               NPCMapID = Integer.parseInt(line.substring(pos));
+            } else if (i == 8) ;
+            else if (i == 9) {
+               NPCText = line;
+            }
+         } catch (Exception e2){
+            System.err.println("ERROR : " + e2.getMessage());
          }
-         catch(Exception e2){}
+         i++;
+
+      }
+
+      NPC npc = new NPC(NPCID,NPCX,NPCY,NPCMapID,NPCTexture,NPCName);
+
+      npcs.add(npc);
+
+      npc.addChat(NPCText);
+
+      // ensure that NPC can be added to proper map slot
+      while (npcList.size() <= NPCMapID ) npcList.add(new ArrayList<Integer>());
+
+      // add NPCID to NPCMapID slot in npcList(main indices of array represent map IDs)
+      npcList.get(NPCMapID).add(NPCID);
+
+   }
+   // returns array of NPCs that appear on certain map
+   public NPC[] getNPCS(int mapID){
+
+      while (npcList.size() <= mapID ) npcList.add(new ArrayList<Integer>());
+
+      // list of IDs on map with ID "mapID"
+      ArrayList<Integer> mapList = npcList.get(mapID);
+      System.err.println("There are " + mapList.size() + " npcs in mapID " + mapID);
+      int i = 0;
+      int endID = mapList.size() - 1;
+
+      System.err.println("getNPCS making array of size " + (endID + 1));
+
+      NPC[] arr = new NPC[endID + 1];
+
+      while ( i <= endID ){
+         // grabs NPC from npcs arraylist according toID given by mapList and
+         // stores into array
+         npcs.get(mapList.get(i)).print();
+         arr[i] = npcs.get(mapList.get(i));
          i++;
       }
-      NPC npc = new NPC(ID,x,y,MAPID,texturePath,name);
-      npc.addChat(chat);
 
-      npcs[0] = npc;
+      return arr;
    }
 }

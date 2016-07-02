@@ -21,18 +21,27 @@ public class NPCHandler {
       this.batch = batch;
 
    }
+   public void clearNPCs(){
+      pq.clear();
+   }
+   public void add(NPC[] npc){
+
+      for ( int i = 0; i < npc.length; i++){
+         pq.add(npc[i]);
+      }
+   }
 
    public void add(NPC npc){
       pq.add(npc);
    }
+
    public void render(){
       NPC[] arr1 = new NPC[pq.size()];
       NPC[] arr = pq.toArray(arr1);
 
-      System.err.println("Size of arr = " + arr.length);
+      //System.err.println("Size of arr = " + arr.length);
 
       for ( int i = 0; i < arr.length; i++ ){
-         System.out.println("Drawing " + arr[i].getName());
          arr[i].getSprite().draw(batch);
       }
    }

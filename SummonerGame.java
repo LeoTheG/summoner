@@ -69,16 +69,19 @@ public class SummonerGame extends ApplicationAdapter {
 
 		prefs = Gdx.app.getPreferences("BoxmonSave");
 		batch = new SpriteBatch();
+
 		npcParser = new NPCParser();
-		npcParser.parse();
-		npcs = npcParser.npcs;
+
 		world = new World(npcParser);
 		camera = new OrthographicCamera(WIDTH, HEIGHT);
 		tiledMapRenderer = world.getTiledMapRenderer();
 		player = new Player(prefs, world, menuHandler);
 		camera.zoom = (float)0.5;
 
+
 		npcHandler = new NPCHandler(batch);
+		world.setNPCHandler(npcHandler);
+		npcs = world.getNPCs();
 
 		menuHandler.setPlayer(player);
 		font.setColor(0f,0f,0f,1f);
@@ -106,20 +109,31 @@ public class SummonerGame extends ApplicationAdapter {
 
 		//begin rendering
 		batch.begin();
-		if ( player.getY() < npcs[0].getSprite().getY() ) {
-			npcs[0].getSprite().draw(batch);
-			player.getPlayerSprite().draw(batch);
-		}
-		else{
-			player.getPlayerSprite().draw(batch);
-			npcs[0].getSprite().draw(batch);
-		}
 
+		// for drawing NPCs
+		npcHandler.render();
+		npcs = world.getNPCs();
+
+		if ( npcs.length > 0 ) {
+
+			if (player.getY() < npcs[0].getSprite().getY()) {
+				npcs[0].getSprite().draw(batch);
+				player.getPlayerSprite().draw(batch);
+			} else {
+				player.getPlayerSprite().draw(batch);
+				npcs[0].getSprite().draw(batch);
+			}
+		}
+		else player.getPlayerSprite().draw(batch);
+
+		// for drawing menu
 		Sprite[] sprites = menuHandler.getSprites();
 
 		for(int i = 0; i < sprites.length; i++){
 			sprites[i].draw(batch);
 		}
+
+		// for drawing chat
 		if ( menuHandler.getState() == MenuHandler.states.INCHAT) {
 			text = menuHandler.getChat();
 
@@ -134,6 +148,8 @@ public class SummonerGame extends ApplicationAdapter {
 		if ( menuHandler.getState() == MenuHandler.states.FREE ){
 			textDrawLength = 0;
 		}
+
+
 		batch.end();
 	}
 	public void dispose()

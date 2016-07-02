@@ -69,6 +69,7 @@ public class NPC implements Comparable<NPC> {
     public String getName(){
         return name;
     }
+    public int getMapID() { return mapID;}
     public int compareTo(NPC npc){
         if ( z < npc.z ) return -1;
         else if ( z > npc.z ) return 1;
@@ -84,6 +85,9 @@ public class NPC implements Comparable<NPC> {
     }
     public String getChat(){
         return currentChat;
+    }
+    public void print(){
+        System.out.println("Name: " + name + "\nID: " + ID + "\nmapID: " + mapID);
     }
 
 }

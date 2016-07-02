@@ -1,5 +1,6 @@
 package gharib.leonar.summoner;
 
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.maps.tiled.TiledMapRenderer;
 
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ public class World {
     private int currentMapIndex;
     public List<Spot> spots = new ArrayList<Spot>();
     private NPCParser npcParser;
+    private NPCHandler npcHandler;
     private static final int FORWARD = 0, RIGHT = 1, BACKWARD = 2, LEFT = 3; //player's direction constants
 
     private Map[] maps = { new Map("maps\\house2.tmx", 0),
@@ -30,9 +32,21 @@ public class World {
         currentMapIndex = 0;
         currentMap = maps[currentMapIndex]; //begin inside map house1
         npcParser.parse();
-        npcs = npcParser.npcs;
-        System.err.println("Added spot with x = " + npcs[0].x + " and y = " + npcs[0].y);
-        spots.add( new Spot(new Point(npcs[0].x,npcs[0].y), npcs[0]));
+        npcs = npcParser.getNPCS(currentMapIndex);
+
+        // add spot(s)
+        for ( int i = 0; i < npcs.length; i++) {
+            spots.add(new Spot(new Point(npcs[i].x, npcs[i].y), npcs[i]));
+        }
+        npcHandler = null;
+        npcs = npcParser.getNPCS(currentMapIndex);
+        if ( npcs == null ) System.err.println("npcs is null -- constructor");
+    }
+    public void setNPCHandler(NPCHandler n){
+        npcHandler = n;
+    }
+    public NPC[] getNPCs(){
+        return npcs;
     }
     public Map getCurrentMap()
     {
@@ -45,7 +59,7 @@ public class World {
     {
         currentMap = maps[ID];
         currentMap.updateTiledMapRenderer();
-
+        npcs = npcParser.getNPCS(ID);
         Point p = null;
 
         switch (ID){
@@ -56,6 +70,17 @@ public class World {
                 p = new Point(3,5);
                 break;
         }
+
+        npcHandler.clearNPCs();
+        spots.clear();
+
+        npcHandler.add(npcs);
+
+        for ( int i = 0; i < npcs.length; i++){
+            spots.add(new Spot(new Point(npcs[i].x, npcs[i].y), npcs[i]));
+        }
+
+
         return p;
     }
     public TiledMapRenderer getTiledMapRenderer()
