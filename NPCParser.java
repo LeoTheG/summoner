@@ -51,62 +51,92 @@ public class NPCParser {
 
       try{
          in = new BufferedReader(new FileReader("characters\\NPCS\\NPCS.txt"));
+            line = in.readLine();
+
+            // parse 1st line -- # total NPCS
+            numTotalNPCs = Integer.parseInt(line);
+         //System.err.println("Num total NPCS: "+ numTotalNPCs);
       }
       catch(Exception e){}
 
       int pos = 0;
 
-      while ( i < 10 ){
+      while ( i < (9 * numTotalNPCs + 1) ){
+
+        int index = i % 9;
+
+         //System.err.println("~~index = " + index);
+
          try {
             line = in.readLine();
 
-            // parse first line -- # total NPCS
-            if (i == 0) {
-               numTotalNPCs = Integer.parseInt(line);
+            //System.err.println("Read line: " + line);
+
+            switch ( index ) {
+              case 0:
+                 //System.err.println("case 0 : skip");
+                break;
+              case 1:
+
+                pos = line.indexOf(ID) + ID.length();
+                NPCID = Integer.parseInt(line.substring(pos));
+                 //System.err.println("ID: " + NPCID);
+                break;
+              case 2:
+                pos = line.indexOf(NAME) + NAME.length();
+                NPCName = line.substring(pos);
+                 //System.err.println("Name: " + NPCName);
+                break;
+              case 3:
+                pos = line.indexOf(X) + X.length();
+                NPCX = Integer.parseInt(line.substring(pos));
+                 //System.err.println("X: " + NPCX);
+                break;
+              case 4:
+                pos = line.indexOf(Y) + Y.length();
+                NPCY = Integer.parseInt(line.substring(pos));
+                 //System.err.println("Y: " + NPCY);
+                break;
+              case 5:
+                pos = line.indexOf(TEXTURE) + TEXTURE.length();
+                NPCTexture = line.substring(pos);
+                 //System.err.println("Texture: " + NPCTexture);
+                break;
+              case 6:
+                pos = line.indexOf(MAPID) + MAPID.length();
+                NPCMapID = Integer.parseInt(line.substring(pos));
+                 //System.err.println("MapID: " + NPCMapID);
+                break;
+              case 7:
+                 //System.err.println("Skip");
+                break;
+              case 8:
+                NPCText = line;
+                 //System.err.println("Text: " + line);
+                break;
             }
-            // parse second line -- blank
-            else if (i == 1) ;
-               // parse third line -- ID
-            else if (i == 2) {
-               pos = line.indexOf(ID) + ID.length();
-               NPCID = Integer.parseInt(line.substring(pos));
-            } else if (i == 3) {
-               pos = line.indexOf(NAME) + NAME.length();
-               NPCName = line.substring(pos);
-            } else if (i == 4) {
-               pos = line.indexOf(X) + X.length();
-               NPCX = Integer.parseInt(line.substring(pos));
-            } else if (i == 5) {
-               pos = line.indexOf(Y) + Y.length();
-               NPCY = Integer.parseInt(line.substring(pos));
-            } else if (i == 6) {
-               pos = line.indexOf(TEXTURE) + TEXTURE.length();
-               NPCTexture = line.substring(pos);
-            } else if (i == 7) {
-               pos = line.indexOf(MAPID) + MAPID.length();
-               NPCMapID = Integer.parseInt(line.substring(pos));
-            } else if (i == 8) ;
-            else if (i == 9) {
-               NPCText = line;
+            if ( index == 8) {
+               //System.err.println("Making new NPC at mapID: " + NPCMapID);
+
+               NPC npc = new NPC(NPCID,NPCX,NPCY,NPCMapID,NPCTexture,NPCName);
+
+               npcs.add(npc);
+
+               npc.addChat(NPCText);
+
+               // ensure that NPC can be added to proper map slot
+               while (npcList.size() <= NPCMapID ) npcList.add(new ArrayList<Integer>());
+
+               // add NPCID to NPCMapID slot in npcList(main indices of array represent map IDs)
+               npcList.get(NPCMapID).add(NPCID);
             }
-         } catch (Exception e2){
+        }
+        catch (Exception e2){
             System.err.println("ERROR : " + e2.getMessage());
-         }
+        }
          i++;
 
       }
-
-      NPC npc = new NPC(NPCID,NPCX,NPCY,NPCMapID,NPCTexture,NPCName);
-
-      npcs.add(npc);
-
-      npc.addChat(NPCText);
-
-      // ensure that NPC can be added to proper map slot
-      while (npcList.size() <= NPCMapID ) npcList.add(new ArrayList<Integer>());
-
-      // add NPCID to NPCMapID slot in npcList(main indices of array represent map IDs)
-      npcList.get(NPCMapID).add(NPCID);
 
    }
    // returns array of NPCs that appear on certain map
@@ -127,7 +157,7 @@ public class NPCParser {
       while ( i <= endID ){
          // grabs NPC from npcs arraylist according toID given by mapList and
          // stores into array
-         npcs.get(mapList.get(i)).print();
+         //npcs.get(mapList.get(i)).print();
          arr[i] = npcs.get(mapList.get(i));
          i++;
       }

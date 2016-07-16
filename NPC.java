@@ -23,6 +23,7 @@ public class NPC implements Comparable<NPC> {
     private Sprite sprite;
     private String name;
     private String currentChat = "";
+    private boolean battle;
 
     private ArrayList<String> chat;
 
@@ -48,6 +49,12 @@ public class NPC implements Comparable<NPC> {
         direction = 0;
 
         chat = new ArrayList<String>();
+
+        battle = false;
+    }
+    public boolean getBattle(){
+        if (ID == 2) return true;
+        else return false;
     }
     public NPC(int ID)
     {
@@ -70,9 +77,13 @@ public class NPC implements Comparable<NPC> {
         return name;
     }
     public int getMapID() { return mapID;}
+
+    // PQ ordered by top being highest y value.
+    // needed for 
+
     public int compareTo(NPC npc){
-        if ( z < npc.z ) return -1;
-        else if ( z > npc.z ) return 1;
+        if ( y > npc.y ) return -1;
+        else if ( y < npc.y ) return 1;
         return 0;
     }
     public void setZ(int i){

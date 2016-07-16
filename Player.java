@@ -29,7 +29,7 @@ public class Player {
     private int moveCounterUp = 0, moveCounterDown = 0, moveCounterLeft = 0, moveCounterRight = 0;
     //used in conjunction with KEY_SENSITIVITY to tell how long the respective movement keys have been pressed
     private int numWKeyPressed, numDKeyPressed, numSKeyPressed, numAKeyPressed,
-                numSPACEKeyPressed;
+                numSPACEKeyPressed, numFKeyPressed;
     //whether or not the player is moving (move counters are all = 0 or not)
     public boolean isMoving;
     //texture & sprite of player
@@ -51,8 +51,9 @@ public class Player {
         menuHandler = m;
         x = prefs.getInteger("playerX", 0);
         y = prefs.getInteger("playerY", 0);
-        //x = 2;
-        //y = 2;
+        System.err.println("x = " + x/TILE_LENGTH + ", y = " + y/TILE_LENGTH);
+        //x = 1*TILE_LENGTH;
+        //y = 1*TILE_LENGTH;
         direction = prefs.getInteger("playerDirection");
         init();
     }
@@ -71,13 +72,13 @@ public class Player {
     private void init()
     {
         textures = new Texture[4];
-        textures[0] = new Texture(new FileHandle(new File("characters\\PlayerTexture.png")));
-        textures[2] = new Texture(new FileHandle(new File("characters\\PlayerTextureBack.png")));
-        textures[3] = new Texture(new FileHandle(new File("characters\\PlayerTextureLeft.png")));
-        textures[1] = new Texture(new FileHandle(new File("characters\\PlayerTextureRight.png")));
+        textures[FORWARD] = new Texture(new FileHandle(new File("characters\\PlayerTexture.png")));
+        textures[BACKWARD] = new Texture(new FileHandle(new File("characters\\PlayerTextureBack.png")));
+        textures[LEFT] = new Texture(new FileHandle(new File("characters\\PlayerTextureLeft.png")));
+        textures[RIGHT] = new Texture(new FileHandle(new File("characters\\PlayerTextureRight.png")));
 
         isMoving = false;
-        //direction = FORWARD;
+
         playerSprites = new Sprite[4];
         playerSprites[FORWARD] = new Sprite(textures[BACKWARD]);
         playerSprites[BACKWARD] = new Sprite(textures[FORWARD]);
@@ -85,7 +86,7 @@ public class Player {
         playerSprites[RIGHT] = new Sprite(textures[RIGHT]);
 
     }
-    /* Fixes the x & y coordinate of Player if Player is not exactly within bounds of a block */
+    /* Fixes the x & y  coordinate of Player if Player is not exactly within bounds of a block */
     public void fixXY()
     {
         while(x%TILE_LENGTH != 0) x--;
@@ -194,13 +195,10 @@ public class Player {
     private boolean canMove(int dir)
     {
 
+        if (menuHandler.getState() != MenuHandler.states.FREE) return false;
+
         int playerX   = x/TILE_LENGTH;
         int playerY   = y/TILE_LENGTH;
-
-        // player cannot move when chatting
-        if ( menuHandler.getState() == MenuHandler.states.INCHAT ){
-            return false;
-        }
 
         //checks if the block to which Player is attempting to move is valid (i.e. within bounds)
 
@@ -259,6 +257,7 @@ public class Player {
 
         if(!isMoving()) {
 
+            // handle SPACE key
             if (Gdx.input.isKeyPressed(Input.Keys.SPACE)){
                 if ( numSPACEKeyPressed == 0 ) {
                     // look for what tile player is facing
@@ -275,6 +274,19 @@ public class Player {
                 }
             }
             else numSPACEKeyPressed = 0;
+
+            // handle F key
+            if (Gdx.input.isKeyPressed(Input.Keys.F)){
+                if ( numFKeyPressed == 0 ) {
+
+                    menuHandler.pressedF();
+                    numFKeyPressed = 1;
+                    System.out.println("Pressed F");
+
+                }
+            }
+            else numFKeyPressed = 0;
+
             if (Gdx.input.isKeyPressed(Input.Keys.W)) {
 
                 if(direction == FORWARD && numWKeyPressed > KEY_SENSITIVITY) {

@@ -1,5 +1,6 @@
 package gharib.leonar.summoner;
 
+import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.maps.tiled.TiledMapRenderer;
 
@@ -20,19 +21,24 @@ public class World {
     private NPCParser npcParser;
     private NPCHandler npcHandler;
     private static final int FORWARD = 0, RIGHT = 1, BACKWARD = 2, LEFT = 3; //player's direction constants
+    private Point point;
 
     private Map[] maps = { new Map("maps\\house2.tmx", 0),
                            new Map("maps\\outside1.tmx", 1)
                          };
     private NPC[] npcs;
 
-    public World(NPCParser npcParser)
+    public World(Preferences p, NPCParser npcParser)
     {
         this.npcParser = npcParser;
-        currentMapIndex = 0;
+        //currentMapIndex = 0;
+        currentMapIndex = p.getInteger("mapID", 0);
+        System.err.println("Loading map: " + currentMapIndex);
         currentMap = maps[currentMapIndex]; //begin inside map house1
         npcParser.parse();
         npcs = npcParser.getNPCS(currentMapIndex);
+
+        point = new Point(0,0);
 
         // add spot(s)
         for ( int i = 0; i < npcs.length; i++) {
@@ -44,6 +50,7 @@ public class World {
     }
     public void setNPCHandler(NPCHandler n){
         npcHandler = n;
+        npcHandler.add(npcs);
     }
     public NPC[] getNPCs(){
         return npcs;
@@ -57,22 +64,24 @@ public class World {
     // also returns point which should be updated point of player in new map
     public Point changeMap(int ID)
     {
+        currentMapIndex = ID;
         currentMap = maps[ID];
         currentMap.updateTiledMapRenderer();
         npcs = npcParser.getNPCS(ID);
-        Point p = null;
 
         switch (ID){
             case 0:
-                p = new Point(8,1);
+                point.x = 8;
+                point.y = 1;;
                 break;
             case 1:
-                p = new Point(3,5);
+                point.x = 3;
+                point.y = 5;
                 break;
         }
 
         npcHandler.clearNPCs();
-        spots.clear();
+        spots.removeAll(spots);
 
         npcHandler.add(npcs);
 
@@ -81,7 +90,7 @@ public class World {
         }
 
 
-        return p;
+        return point;
     }
     public TiledMapRenderer getTiledMapRenderer()
     {

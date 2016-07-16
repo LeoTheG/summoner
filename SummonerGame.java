@@ -41,6 +41,7 @@ public class SummonerGame extends ApplicationAdapter {
 	private FreeTypeFontGenerator generator;
 	private FreeTypeFontGenerator.FreeTypeFontParameter parameter;
 	private BitmapFont font;
+	private BitmapFont mmFont; // main menu font
 
 	private NPCHandler npcHandler;
 	private MenuHandler menuHandler;
@@ -59,10 +60,14 @@ public class SummonerGame extends ApplicationAdapter {
 		generator = new FreeTypeFontGenerator(fh);
 		parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
 		parameter.size = 45;
+		parameter.spaceX = 5;
 		parameter.borderColor = Color.BLACK;
 		parameter.kerning = true;
-		parameter.spaceY = 100000;
+
 		font = generator.generateFont(parameter);
+
+		parameter.size = 33;
+		mmFont = generator.generateFont(parameter);
 
 		menuHandler = new MenuHandler();
 
@@ -72,7 +77,7 @@ public class SummonerGame extends ApplicationAdapter {
 
 		npcParser = new NPCParser();
 
-		world = new World(npcParser);
+		world = new World(prefs, npcParser);
 		camera = new OrthographicCamera(WIDTH, HEIGHT);
 		tiledMapRenderer = world.getTiledMapRenderer();
 		player = new Player(prefs, world, menuHandler);
@@ -83,8 +88,10 @@ public class SummonerGame extends ApplicationAdapter {
 		world.setNPCHandler(npcHandler);
 		npcs = world.getNPCs();
 
+
 		menuHandler.setPlayer(player);
 		font.setColor(0f,0f,0f,1f);
+		mmFont.setColor(0f,0f,0f,1f);
 
 	}
 
@@ -102,6 +109,7 @@ public class SummonerGame extends ApplicationAdapter {
 		//end camera handling
 
 		player.moveHandler();
+		if ( menuHandler.getState() == MenuHandler.states.MAINMENU ) menuHandler.menuHandle();
 
 		//tiledMap actions
 		tiledMapRenderer.setView(camera);
@@ -111,20 +119,11 @@ public class SummonerGame extends ApplicationAdapter {
 		batch.begin();
 
 		// for drawing NPCs
-		npcHandler.render();
+		npcHandler.render(player);
 		npcs = world.getNPCs();
 
-		if ( npcs.length > 0 ) {
-
-			if (player.getY() < npcs[0].getSprite().getY()) {
-				npcs[0].getSprite().draw(batch);
-				player.getPlayerSprite().draw(batch);
-			} else {
-				player.getPlayerSprite().draw(batch);
-				npcs[0].getSprite().draw(batch);
-			}
-		}
-		else player.getPlayerSprite().draw(batch);
+		// draws player sprite
+		//player.getPlayerSprite().draw(batch);
 
 		// for drawing menu
 		Sprite[] sprites = menuHandler.getSprites();
@@ -134,7 +133,7 @@ public class SummonerGame extends ApplicationAdapter {
 		}
 
 		// for drawing chat
-		if ( menuHandler.getState() == MenuHandler.states.INCHAT) {
+		if ( menuHandler.getState() == MenuHandler.states.CHATTING) {
 			text = menuHandler.getChat();
 
 			if ((int)textDrawLength < text.length())
@@ -142,12 +141,24 @@ public class SummonerGame extends ApplicationAdapter {
 				textDrawLength+=(0.5f*TEXTSPEED);
 			}
 
-			if ( (int)textDrawLength < text.length() ) textDrawLength +=(0.5f*TEXTSPEED);
+			else menuHandler.setState(MenuHandler.states.INCHAT);
 			font.draw(batch, text.substring(0, (int)textDrawLength), player.getX() - 300 + 15, player.getY() - 160);
 		}
-		if ( menuHandler.getState() == MenuHandler.states.FREE ){
+		// display full text in case of INCHAT and main menu
+		else if ( menuHandler.getState() == MenuHandler.states.INCHAT ){
+			text = menuHandler.getChat();
+			textDrawLength = text.length();
+			font.draw(batch, text.substring(0, (int)textDrawLength), player.getX() - 300 + 15, player.getY() - 160);
+		}
+		else if ( menuHandler.getState() == MenuHandler.states.MAINMENU ){
+			text = menuHandler.getChat();
+			textDrawLength = text.length();
+			mmFont.draw(batch, text.substring(0, (int)textDrawLength), player.getX() + 180, player.getY() + 300);
+		}
+		else if ( menuHandler.getState() == MenuHandler.states.FREE ){
 			textDrawLength = 0;
 		}
+
 
 
 		batch.end();
@@ -158,6 +169,8 @@ public class SummonerGame extends ApplicationAdapter {
 		prefs.putInteger("playerX", player.getX());
 		prefs.putInteger("playerY", player.getY());
 		prefs.putInteger("playerDirection", player.getDirection());
+		System.err.println("Saving mapID: " + world.getCurrentMapIndex());
+		prefs.putInteger("mapID", world.getCurrentMapIndex());
 		prefs.flush();
 		generator.dispose();
 	}
