@@ -15,64 +15,108 @@ import java.util.List;
 
 public class World {
 
+    private static final int FORWARD = 0, RIGHT = 1, BACKWARD = 2, LEFT = 3; //player's direction constants
+
     private Map currentMap;
     private int currentMapIndex;
+
     public List<Spot> spots = new ArrayList<Spot>();
+
     private NPCParser npcParser;
     private NPCHandler npcHandler;
-    private static final int FORWARD = 0, RIGHT = 1, BACKWARD = 2, LEFT = 3; //player's direction constants
+
     private Point point;
 
-    private Map[] maps = { new Map("maps\\house2.tmx", 0),
-                           new Map("maps\\outside1.tmx", 1)
-                         };
+    private Map[] maps = {new Map("maps\\house2.tmx", 0),
+            new Map("maps\\outside1.tmx", 1)
+    };
     private NPC[] npcs;
 
-    public World(Preferences p, NPCParser npcParser)
-    {
+    /**
+     * Constructor for World class
+     *
+     * @param p         - Preferences (save file)
+     * @param npcParser - Used to
+     */
+    public World(Preferences p, NPCParser npcParser) {
         this.npcParser = npcParser;
-        //currentMapIndex = 0;
+        // load map index
         currentMapIndex = p.getInteger("mapID", 0);
-        System.err.println("Loading map: " + currentMapIndex);
-        currentMap = maps[currentMapIndex]; //begin inside map house1
-        npcParser.parse();
+        currentMap = maps[currentMapIndex];
+
+        // load NPCs
         npcs = npcParser.getNPCS(currentMapIndex);
 
-        point = new Point(0,0);
+        // point (x,y) at which player spawns when entering a new map (depends on map)
+        point = new Point(0, 0);
 
-        // add spot(s)
-        for ( int i = 0; i < npcs.length; i++) {
+        // add spot(s) -- tiles occupied by NPCs
+        for (int i = 0; i < npcs.length; i++) {
             spots.add(new Spot(new Point(npcs[i].x, npcs[i].y), npcs[i]));
         }
+
         npcHandler = null;
-        npcs = npcParser.getNPCS(currentMapIndex);
-        if ( npcs == null ) System.err.println("npcs is null -- constructor");
+
     }
-    public void setNPCHandler(NPCHandler n){
+
+    /**
+     * Used to give access to npcHandler
+     *
+     * @param n - npcHandler to hand off to World class
+     */
+    public void setNPCHandler(NPCHandler n) {
         npcHandler = n;
         npcHandler.add(npcs);
     }
-    public NPC[] getNPCs(){
-        return npcs;
-    }
-    public Map getCurrentMap()
-    {
+
+    /**
+     * Getter method which returns currentMap
+     *
+     * @return - currentMap
+     */
+    public Map getCurrentMap() {
         return currentMap;
     }
-    public int getCurrentMapIndex() { return currentMapIndex; }
-    // changes the map to ID given
-    // also returns point which should be updated point of player in new map
-    public Point changeMap(int ID)
-    {
+
+    /**
+     * Getter method which returns currentMapIndex
+     *
+     * @return - currentMapIndex
+     */
+    public int getCurrentMapIndex() {
+        return currentMapIndex;
+    }
+
+    /**
+     * Changes mapID to given ID and determines point at which player spawns on map change
+     *
+     * @param ID - mapID that map is changed to
+     * @return - new point at which player spawns upon changing map
+     */
+    public Point changeMap(int ID) {
         currentMapIndex = ID;
+
+        // change map, update tiles, and get NPCS on new map
         currentMap = maps[ID];
         currentMap.updateTiledMapRenderer();
         npcs = npcParser.getNPCS(ID);
 
-        switch (ID){
+        // clear list of current NPCs in npcHandler and add new NPCs from map change
+        npcHandler.clearNPCs();
+        npcHandler.add(npcs);
+
+        // remove original spots and create new ones
+        spots.removeAll(spots);
+        for (int i = 0; i < npcs.length; i++) {
+            spots.add(new Spot(new Point(npcs[i].x, npcs[i].y), npcs[i]));
+        }
+
+        // determines player's new x and y values depending on map
+        switch (ID) {
             case 0:
                 point.x = 8;
-                point.y = 1;;
+                point.y = 1;
+                ;
                 break;
             case 1:
                 point.x = 3;
@@ -80,80 +124,94 @@ public class World {
                 break;
         }
 
-        npcHandler.clearNPCs();
-        spots.removeAll(spots);
-
-        npcHandler.add(npcs);
-
-        for ( int i = 0; i < npcs.length; i++){
-            spots.add(new Spot(new Point(npcs[i].x, npcs[i].y), npcs[i]));
-        }
-
-
         return point;
     }
-    public TiledMapRenderer getTiledMapRenderer()
-    {
+
+    /**
+     * Accessor method which returns tileMapRenderer
+     *
+     * @return - tiledMapRenderer from Map class
+     */
+    public TiledMapRenderer getTiledMapRenderer() {
         return currentMap.getTiledMapRenderer();
     }
 
-    public boolean occupied(Point p){
+    /**
+     * Check to see if a point is occupied by an NPC
+     *
+     * @param x - x position
+     * @param y - y position
+     * @return - true if point is occupied, false otherwise
+     */
+    public boolean occupied(int x, int y) {
 
-        for ( int i = 0; i < spots.size(); i++ ) {
-            if ( p.x == spots.get(i).x && p.y == spots.get(i).y){
+        // check every spot in spots for a matching x,y position
+        for (int i = 0; i < spots.size(); i++) {
+            if (x == spots.get(i).x && y == spots.get(i).y) {
                 return true;
             }
         }
         return false;
     }
-    // check NPC at point in map
-    public NPC checkSpot(Point p, int direction){
-        for ( int i = 0; i < spots.size(); i++){
-            if ( spots.get(i).point == p ){
-                return spots.get(i).npc;
+
+    public boolean occupied(Point p) {
+
+        for (int i = 0; i < spots.size(); i++) {
+            if (p.x == spots.get(i).x && p.y == spots.get(i).y) {
+                return true;
             }
         }
-        return (NPC) null;
+        return false;
     }
-    public NPC checkSpot(int x, int y, int direction){
+
+
+    /**
+     * Checks spot that player is facing
+     *
+     * @param x         - x coordinate of player
+     * @param y         - y coordinate of player
+     * @param direction - direction that player is facing
+     * @return
+     */
+    public NPC checkSpot(int x, int y, int direction) {
+
         Point p = null;
 
-        switch(direction){
+        // check point depending upon player's direction
+        switch (direction) {
             case FORWARD:
-                p = new Point(x,y+1);
+                p = new Point(x, y + 1);
                 break;
             case LEFT:
-                p = new Point(x-1,y);
+                p = new Point(x - 1, y);
                 break;
             case RIGHT:
-                p = new Point(x+1,y);
+                p = new Point(x + 1, y);
                 break;
             case BACKWARD:
-                p = new Point(x,y-1);
+                p = new Point(x, y - 1);
                 break;
         }
 
-        //System.err.println("Checking spot " + p.x + ", " + p.y);
-        System.out.println("Tile: " + currentMap.getTileName(p.x,p.y));
-        for ( int i = 0; i < spots.size(); i++){
-            if ( spots.get(i).point.equals(p) ){
-                System.out.println("Returning NPC");
+        // return NPC at new point (if exists) else return null
+        for (int i = 0; i < spots.size(); i++) {
+            if (spots.get(i).point.equals(p)) {
                 return spots.get(i).npc;
             }
         }
-        System.err.println("Returning null");
         return (NPC) null;
     }
 
 }
 
-class Spot{
+/* Spot class is used to hold information about an NPC at a point */
+class Spot {
     public NPC npc;
     public Point point;
     public int x;
     public int y;
 
-    Spot(Point p, NPC npc){
+    Spot(Point p, NPC npc) {
         this.npc = npc;
         this.point = p;
         x = p.x;

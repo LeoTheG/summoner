@@ -21,157 +21,163 @@ import com.badlogic.gdx.maps.tiled.TiledMapRenderer;
 
 public class SummonerGame extends ApplicationAdapter {
 
-	private static final int WIDTH = 1280;
-	private static final int HEIGHT = 1280;
+    // Game dimensions
+    private static final int WIDTH = 1280;
+    private static final int HEIGHT = 1280;
 
-	private SpriteBatch batch;
-	private Player player;
-	private World world;
-	private OrthographicCamera camera;
+    private static final int CHATOFFSET_X = -291;
+    private static final int CHATOFFSET_Y = -165;
 
-	private TiledMapRenderer tiledMapRenderer;
+    private static final int MAINMENUOFFSET_X = 180;
+    private static final int MAINMENUOFFSET_Y = 300;
 
-	private Preferences prefs;
+    private SpriteBatch batch;
+    private Player player;
+    private World world;
 
-	private NPCParser npcParser;
+    private OrthographicCamera camera;
 
-	private NPC[] npcs;
+    private TiledMapRenderer tiledMapRenderer;
 
-	private String fontName = "UI\\fonts\\ARCADECLASSIC.TTF";
-	private FreeTypeFontGenerator generator;
-	private FreeTypeFontGenerator.FreeTypeFontParameter parameter;
-	private BitmapFont font;
-	private BitmapFont mmFont; // main menu font
+    private Preferences prefs;
 
-	private NPCHandler npcHandler;
-	private MenuHandler menuHandler;
+    private NPCParser npcParser;
 
-	private String text = "ABCD EFGH IJKL MNOP QRST UVWX YZ";
+    // for drawing text on the screen
+    private String fontName = "UI\\fonts\\prstart.ttf";
+    private FreeTypeFontGenerator generator;
+    private FreeTypeFontGenerator.FreeTypeFontParameter parameter;
+    private BitmapFont font; // normal text font
+    private BitmapFont mmFont; // main menu font (smaller)
+    private String text;
+    public float textDrawLength = 0.0f;
+    public static float TEXTSPEED = 0.5f;
 
-	public float textDrawLength = 0.0f;
-	public static float TEXTSPEED = 0.5f;
+    private NPCHandler npcHandler;
+    private MenuHandler menuHandler;
 
+    @Override
+    public void create() {
 
-	@Override
-	public void create () {
+        FileHandle fh = new FileHandle(fontName);
 
-		FileHandle fh = new FileHandle(fontName);
+        // creates normal text font
+        generator = new FreeTypeFontGenerator(fh);
+        parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
+        parameter.size = 34;
+        parameter.spaceX = 4;
+        parameter.borderColor = Color.BLACK;
+        parameter.kerning = true;
 
-		generator = new FreeTypeFontGenerator(fh);
-		parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
-		parameter.size = 45;
-		parameter.spaceX = 5;
-		parameter.borderColor = Color.BLACK;
-		parameter.kerning = true;
+        font = generator.generateFont(parameter);
 
-		font = generator.generateFont(parameter);
+        // creates smaller menu font
+        parameter.size = 33;
+        mmFont = generator.generateFont(parameter);
 
-		parameter.size = 33;
-		mmFont = generator.generateFont(parameter);
+        // set fonts to black and fully visible
+        font.setColor(0f, 0f, 0f, 1f);
+        mmFont.setColor(0f, 0f, 0f, 1f);
 
-		menuHandler = new MenuHandler();
+        menuHandler = new MenuHandler();
 
+        // loads latest save
+        prefs = Gdx.app.getPreferences("BoxmonSave");
 
-		prefs = Gdx.app.getPreferences("BoxmonSave");
-		batch = new SpriteBatch();
+        batch = new SpriteBatch();
 
-		npcParser = new NPCParser();
+        npcParser = new NPCParser();
 
-		world = new World(prefs, npcParser);
-		camera = new OrthographicCamera(WIDTH, HEIGHT);
-		tiledMapRenderer = world.getTiledMapRenderer();
-		player = new Player(prefs, world, menuHandler);
-		camera.zoom = (float)0.5;
+        world = new World(prefs, npcParser);
+        camera = new OrthographicCamera(WIDTH, HEIGHT);
+        tiledMapRenderer = world.getTiledMapRenderer();
+        player = new Player(prefs, world, menuHandler);
+        camera.zoom = (float) 0.5;
 
-
-		npcHandler = new NPCHandler(batch);
-		world.setNPCHandler(npcHandler);
-		npcs = world.getNPCs();
-
-
-		menuHandler.setPlayer(player);
-		font.setColor(0f,0f,0f,1f);
-		mmFont.setColor(0f,0f,0f,1f);
-
-	}
-
-	@Override
-	public void render () {
-		Gdx.gl.glClearColor(0, 0, 0, 0);
-		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
-		tiledMapRenderer = world.getTiledMapRenderer();
-
-		//camera
-		camera.position.set(player.getX(), player.getY(), 0);
-		camera.update();
-		batch.setProjectionMatrix(camera.combined);
-		//end camera handling
-
-		player.moveHandler();
-		if ( menuHandler.getState() == MenuHandler.states.MAINMENU ) menuHandler.menuHandle();
-
-		//tiledMap actions
-		tiledMapRenderer.setView(camera);
-		tiledMapRenderer.render();
-
-		//begin rendering
-		batch.begin();
-
-		// for drawing NPCs
-		npcHandler.render(player);
-		npcs = world.getNPCs();
-
-		// draws player sprite
-		//player.getPlayerSprite().draw(batch);
-
-		// for drawing menu
-		Sprite[] sprites = menuHandler.getSprites();
-
-		for(int i = 0; i < sprites.length; i++){
-			sprites[i].draw(batch);
-		}
-
-		// for drawing chat
-		if ( menuHandler.getState() == MenuHandler.states.CHATTING) {
-			text = menuHandler.getChat();
-
-			if ((int)textDrawLength < text.length())
-			{
-				textDrawLength+=(0.5f*TEXTSPEED);
-			}
-
-			else menuHandler.setState(MenuHandler.states.INCHAT);
-			font.draw(batch, text.substring(0, (int)textDrawLength), player.getX() - 300 + 15, player.getY() - 160);
-		}
-		// display full text in case of INCHAT and main menu
-		else if ( menuHandler.getState() == MenuHandler.states.INCHAT ){
-			text = menuHandler.getChat();
-			textDrawLength = text.length();
-			font.draw(batch, text.substring(0, (int)textDrawLength), player.getX() - 300 + 15, player.getY() - 160);
-		}
-		else if ( menuHandler.getState() == MenuHandler.states.MAINMENU ){
-			text = menuHandler.getChat();
-			textDrawLength = text.length();
-			mmFont.draw(batch, text.substring(0, (int)textDrawLength), player.getX() + 180, player.getY() + 300);
-		}
-		else if ( menuHandler.getState() == MenuHandler.states.FREE ){
-			textDrawLength = 0;
-		}
+        // gives world object access to NPCHandler and menuHandler access to player
+        npcHandler = new NPCHandler(batch);
+        world.setNPCHandler(npcHandler);
+        menuHandler.setPlayer(player);
 
 
+    }
 
-		batch.end();
-	}
-	public void dispose()
-	{
-		player.fixXY();
-		prefs.putInteger("playerX", player.getX());
-		prefs.putInteger("playerY", player.getY());
-		prefs.putInteger("playerDirection", player.getDirection());
-		System.err.println("Saving mapID: " + world.getCurrentMapIndex());
-		prefs.putInteger("mapID", world.getCurrentMapIndex());
-		prefs.flush();
-		generator.dispose();
-	}
+    @Override
+    public void render() {
+        // clear background for proper rendering
+        Gdx.gl.glClearColor(0, 0, 0, 0);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        tiledMapRenderer = world.getTiledMapRenderer();
+
+        //camera
+        camera.position.set(player.getX(), player.getY(), 0);
+        camera.update();
+        batch.setProjectionMatrix(camera.combined);
+
+        // handles player's movement (keyboard input and all)
+        player.moveHandler();
+
+        // handles main menu if player is in main menu
+        if (menuHandler.getState() == MenuHandler.states.MAINMENU) menuHandler.menuHandle();
+
+        //tiledMap actions
+        tiledMapRenderer.setView(camera);
+        tiledMapRenderer.render();
+
+        //begin rendering
+        batch.begin();
+
+        // for drawing NPCs and player (according to Y value)
+        npcHandler.render(player);
+
+        // for drawing menu
+        if (menuHandler.getState() != MenuHandler.states.FREE) {
+
+            Sprite[] sprites = menuHandler.getSprites();
+
+            for (int i = 0; i < sprites.length; i++) {
+                sprites[i].draw(batch);
+            }
+        }
+
+        // for drawing chat one character at a time
+        if (menuHandler.getState() == MenuHandler.states.CHATTING) {
+            text = menuHandler.getChat(); // get text from menuHandler which pulls from NPC
+
+            if ((int) textDrawLength < text.length()) {
+                textDrawLength += (0.5f * TEXTSPEED);
+            } else menuHandler.setState(MenuHandler.states.INCHAT);
+            font.draw(batch, text.substring(0, (int) textDrawLength), player.getX() + CHATOFFSET_X, player.getY() + CHATOFFSET_Y);
+        }
+        // display full text in case of INCHAT
+        else if (menuHandler.getState() == MenuHandler.states.INCHAT) {
+            text = menuHandler.getChat();
+            textDrawLength = text.length();
+            font.draw(batch, text.substring(0, (int) textDrawLength), player.getX() + CHATOFFSET_X, player.getY() + CHATOFFSET_Y);
+        }
+        // display full text in case of menu
+        else if (menuHandler.getState() == MenuHandler.states.MAINMENU) {
+            text = menuHandler.getChat();
+            textDrawLength = text.length();
+            mmFont.draw(batch, text.substring(0, (int) textDrawLength), player.getX() + MAINMENUOFFSET_X, player.getY() + MAINMENUOFFSET_Y);
+        }
+        // draw no text if player is not in menu or chatting
+        else if (menuHandler.getState() == MenuHandler.states.FREE) {
+            textDrawLength = 0;
+        }
+
+        batch.end();
+    }
+
+    public void dispose() {
+        player.fixXY();
+        // save player's x,y position, their direction, and the map they are on
+        prefs.putInteger("playerX", player.getX());
+        prefs.putInteger("playerY", player.getY());
+        prefs.putInteger("playerDirection", player.getDirection());
+        prefs.putInteger("mapID", world.getCurrentMapIndex());
+        prefs.flush();
+        generator.dispose();
+    }
 }

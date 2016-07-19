@@ -9,151 +9,197 @@ import java.util.ArrayList;
 
 /* Author       : Leonar Gharib
    Date Created : 6/29/2016
-   Purpose      :
+   Purpose      : Handle menu sprites and menu navigation. Uses states as control points
+                  for exploring menu options.
 */
 public class MenuHandler {
 
-   // FREE - player is not in any menu
-   // CHATTING - player has text currently displaying on his screen
-   // INCHAT - player has finished text displayed on his screen (CHATTING progresses to INCHAT)
-   public enum states {FREE, CHATTING, INCHAT, MAINMENU}
-   private states s;
-   private ArrayList<Sprite> sprites;
+    // FREE - player is not in any menu
+    // CHATTING - player has text currently displaying on his screen
+    // INCHAT - player has finished text displayed on his screen (CHATTING progresses to INCHAT)
+    // MAINMENU - player is in main menu where they can choose multiple options
+    public enum states {
+        FREE, CHATTING, INCHAT, MAINMENU
+    }
 
-   private static int TILE_LENGTH = 64;
-   private static final int WIDTH = 1280;
-   private static final int HEIGHT = 1280;
+    private states s;
+    private ArrayList<Sprite> sprites;
 
-   private String currentChat = "";
+    private static int TILE_LENGTH = 64;
+    private static final int WIDTH = 1280;
+    private static final int HEIGHT = 1280;
 
-   private Sprite textBox = new Sprite (new Texture("UI/gray-box.png"));
-   private Sprite mainMenuBox = new Sprite(new Texture("UI/menu-box.png"));
-   private Sprite cursor = new Sprite(new Texture("UI/cursor.png"));
+    private String currentChat = "";
 
-   private Player player;
+    private Sprite textBox = new Sprite(new Texture("UI/gray-box.png"));
+    private Sprite mainMenuBox = new Sprite(new Texture("UI/menu-box.png"));
+    private Sprite cursor = new Sprite(new Texture("UI/cursor.png"));
 
-   private int[] keysPressed = new int[4]; // for up, down, left, right key movement
+    private Player player;
 
-   private static int UP = 0;
-   private static int DOWN = 1;
-   private static int LEFT = 2;
-   private static int RIGHT = 3;
+    private int[] keysPressed = new int[4]; // for up, down, left, right key movement
 
-   private Point cursorPoint;
-   private int cursorSelection;
+    private static int UP = 0;
+    private static int DOWN = 1;
+    private static int LEFT = 2;
+    private static int RIGHT = 3;
 
-   public MenuHandler(){
-      s = states.FREE;
-      sprites = new ArrayList<Sprite>();
+    private Point cursorPoint;
+    private int cursorSelection;
 
-      textBox.setScale(6.5f,3.5f);
-      mainMenuBox.setScale(3.5f,2f);
-      cursor.setScale(0.3f, 0.3f);
+    /** Constructor which begins states as FREE */
+    public MenuHandler() {
+        s = states.FREE;
+        sprites = new ArrayList<Sprite>();
 
-      cursorPoint = new Point(0,0);
-      cursorSelection = 0;
-   }
-   public void setPlayer(Player p ){player = p;}
-   public void pressedSpace(){
-      // check to see what current state of menu is
-      if ( s == states.FREE ){
-         if ( currentChat.length() == 0 ) return;
-         sprites.add(textBox);
-         s = states.CHATTING;
-      }
-      else if ( s == states.CHATTING ){
-         //sprites.remove(textBox);
-         s = states.INCHAT;
-      }
-      else if ( s == states.INCHAT ){
-         sprites.remove(textBox);
-         s = states.FREE;
-      }
-      else if ( s == states.MAINMENU ) {
-         currentChat = "PACK\nSPIRITS\nBOOK\nSAVE";
-      }
-   }
-   public void setState(states st){
-      s = st;
-   }
-   public void pressedF(){
-      if ( s == states.FREE ) {
-         sprites.add(mainMenuBox);
-         sprites.add(cursor);
-         s = states.MAINMENU;
-         currentChat = "PACK\nSPIRITS\nBOOK\nSAVE";
-      }
-      else if ( s == states.MAINMENU ){
-         s = states.FREE;
-         sprites.remove(mainMenuBox);
-         sprites.remove(cursor);
-         cursorSelection = 0;
-      }
-   }
-   public states getState(){
-      return s;
-   }
-   // used for drawing sprites in SummonerGame
-   public Sprite[] getSprites(){
-      Sprite[] arr = new Sprite[sprites.size()];
-      Sprite[] arrs = sprites.toArray(arr);
+        // properly scale menu items
+        textBox.setScale(6.5f, 3.5f);
+        mainMenuBox.setScale(3.5f, 2f);
+        cursor.setScale(0.3f, 0.3f);
 
-      for ( int i = 0; i < arrs.length; i++ ){
-         if ( arrs[i] == textBox) {
-            textBox.setX(player.getX() - textBox.getWidth()/2);
-            textBox.setY(player.getY() - HEIGHT/4 + 60 );
-         }
-         else if ( arrs[i] == mainMenuBox ) {
-            mainMenuBox.setX(player.getX() + mainMenuBox.getWidth()/2 + 182);
-            mainMenuBox.setY(player.getY() + 170);
-         }
-         else if ( arrs[i] == cursor ) {
-            cursor.setX(cursorPoint.x);
-            cursor.setY(cursorPoint.y);
-         }
-      }
+        cursorPoint = new Point(0, 0);
+        cursorSelection = 0;
+    }
 
-      return sprites.toArray(arr);
-   }
-   public String getChat(){
-      return currentChat;
-   }
-   public void setChat(String str){
-      currentChat = str;
-   }
+    /**
+     * Mutator method for setting player
+     *
+     * @param p - player object
+     */
+    public void setPlayer(Player p) {
+        player = p;
+    }
 
-   public void menuHandle(){
-      if ( s != states.MAINMENU ) return;
-      // UP
-      if (Gdx.input.isKeyPressed(Input.Keys.W)){
+    /**
+     * Change menu when SPACE is pressed depending on menu state
+     */
+    public void pressedSpace() {
 
-         if ( keysPressed[UP] == 0 ) {
-            keysPressed[UP] = 1;
+        if (s == states.FREE) {
+            if (currentChat.length() == 0) return;
+            sprites.add(textBox);
+            s = states.CHATTING;
+        } else if (s == states.CHATTING) {
+            //sprites.remove(textBox);
+            s = states.INCHAT;
+        } else if (s == states.INCHAT) {
+            sprites.remove(textBox);
+            s = states.FREE;
+        } else if (s == states.MAINMENU) {
+        }
+    }
 
-            if(cursorSelection != 0 ){
-               cursorSelection--;
-               System.err.println("Reducing cursorSelection to " + cursorSelection);
+    /**
+     * Change menu when F is pressed depending on menu state
+     */
+    public void pressedF() {
+        if (s == states.FREE) {
+            sprites.add(mainMenuBox);
+            sprites.add(cursor);
+            s = states.MAINMENU;
+            currentChat = "PACK\nSPIRITS\nBOOK\nSAVE";
+        } else if (s == states.MAINMENU) {
+            s = states.FREE;
+            sprites.remove(mainMenuBox);
+            sprites.remove(cursor);
+            cursorSelection = 0;
+        }
+    }
+
+    /**
+     * Mutator method for state
+     *
+     * @param st - state to change menuHandler's state to
+     */
+    public void setState(states st) {
+        s = st;
+    }
+
+    /**
+     * Getter method for state
+     *
+     * @return - state of menuHandler
+     */
+    public states getState() {
+        return s;
+    }
+
+    /**
+     * Returns menu sprites; used to draw sprites in SummonerGame class
+     *
+     * @return - array of sprites to draw
+     */
+    public Sprite[] getSprites() {
+        // convert sprites list to array
+        Sprite[] arr = new Sprite[sprites.size()];
+        Sprite[] arrs = sprites.toArray(arr);
+
+        // depending on menu sprites being displayed, adjust X and Y positions
+        for (int i = 0; i < arrs.length; i++) {
+            if (arrs[i] == textBox) {
+                textBox.setX(player.getX() - textBox.getWidth() / 2);
+                textBox.setY(player.getY() - HEIGHT / 4 + 60);
+            } else if (arrs[i] == mainMenuBox) {
+                mainMenuBox.setX(player.getX() + mainMenuBox.getWidth() / 2 + 182);
+                mainMenuBox.setY(player.getY() + 170);
+            } else if (arrs[i] == cursor) {
+                cursor.setX(cursorPoint.x);
+                cursor.setY(cursorPoint.y);
             }
-         }
-      }
-      else keysPressed[UP] = 0;
+        }
 
-      // DOWN
-      if (Gdx.input.isKeyPressed(Input.Keys.S)){
+        return sprites.toArray(arr);
+    }
 
-         if ( keysPressed[DOWN] == 0 ) {
-            keysPressed[DOWN] = 1;
+    /**
+     * Getter method for currentChat
+     */
+    public String getChat() {
+        return currentChat;
+    }
 
-            if(cursorSelection != 3 ){
-               cursorSelection++;
-               System.err.println("Increasing cursorSelection to " + cursorSelection);
+    /**
+     * Setter method for currentChat
+     */
+    public void setChat(String str) {
+        currentChat = str;
+    }
+
+    /**
+     * Handles menu and cursor depending on keyboard input
+     */
+    public void menuHandle() {
+
+        if (s != states.MAINMENU) return;
+
+        // UP
+        if (Gdx.input.isKeyPressed(Input.Keys.W)) {
+
+            if (keysPressed[UP] == 0) {
+                keysPressed[UP] = 1;
+
+                if (cursorSelection != 0) {
+                    cursorSelection--;
+                    System.err.println("Reducing cursorSelection to " + cursorSelection);
+                }
             }
-         }
-      }
-      else keysPressed[DOWN] = 0;
+        } else keysPressed[UP] = 0;
 
-      // update cursorPoint
-      cursorPoint.x = player.getX() + 135;
-      cursorPoint.y = player.getY() + 260 - (33*cursorSelection);
-   }
+        // DOWN
+        if (Gdx.input.isKeyPressed(Input.Keys.S)) {
+
+            if (keysPressed[DOWN] == 0) {
+                keysPressed[DOWN] = 1;
+
+                if (cursorSelection != 3) {
+                    cursorSelection++;
+                    System.err.println("Increasing cursorSelection to " + cursorSelection);
+                }
+            }
+        } else keysPressed[DOWN] = 0;
+
+        // update cursorPoint
+        cursorPoint.x = player.getX() + 135;
+        cursorPoint.y = player.getY() + 260 - (33 * cursorSelection);
+    }
 }

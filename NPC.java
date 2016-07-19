@@ -7,15 +7,16 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import java.io.File;
 import java.util.ArrayList;
 
-/**
- * Created by Leonar on 6/18/2015.
- */
+/* Author       : Leonar Gharib
+   Date Created : 6/18/2015
+   Purpose      : Implement NPC class which holds properties about various NPCs in the world.
+                  NPCs are created through NPCParser.
+*/
 public class NPC implements Comparable<NPC> {
 
     protected Map map;
     protected int x;
     protected int y;
-    protected int z;
     protected Texture texture;
     protected int direction;
     protected int ID;
@@ -29,13 +30,23 @@ public class NPC implements Comparable<NPC> {
 
     protected final static int TILE_LENGTH = 64;
 
-    public NPC(int ID, int x, int y, int MAPID, String texturePath, String name )
-    {
+    // maximum amount of characters allowed on a line
+    private static final int MAX_NUM_CHAR = 16;
+
+    /** Constructor
+     *
+     * @param ID - unique NPC ID
+     * @param x - x position
+     * @param y - y position
+     * @param MAPID - map on which NPC appears
+     * @param texturePath - path to texture image
+     * @param name - name of NPC
+     */
+    public NPC(int ID, int x, int y, int MAPID, String texturePath, String name) {
         this.ID = ID;
         this.x = x;
         this.y = y;
-        mapID = MAPID;
-        this.z = 0;
+        this.mapID = MAPID;
 
         String path = "characters/" + texturePath;
         this.texture = new Texture(new FileHandle(new File(path)));
@@ -52,52 +63,120 @@ public class NPC implements Comparable<NPC> {
 
         battle = false;
     }
-    public boolean getBattle(){
+
+    /** Determine if NPC can battle or not
+     *
+     * @return - true if NPC can battle, false otherwise.
+     */
+    public boolean getBattle() {
         if (ID == 2) return true;
         else return false;
     }
-    public NPC(int ID)
-    {
-        this.ID = ID;
-    }
-    /* What happens when the player attempts to talk to this NPC
-     * @return - the String returned when the player speaks to the NPC
+
+    /** Sets x,y values for sprite and returns sprite
+     *
+     * @return - sprite with correct x,y values
      */
-    public String talk()
-    {
-        return "This is a test!";
-    }
     public Sprite getSprite() {
-        sprite.setX(x*TILE_LENGTH);
-        sprite.setY(y*TILE_LENGTH);
-        setZ(y);
+        sprite.setX(x * TILE_LENGTH);
+        sprite.setY(y * TILE_LENGTH);
         return sprite;
     }
-    public String getName(){
+
+    /** Getter method for name
+     *
+     * @return - name of NPC
+     */
+    public String getName() {
         return name;
     }
-    public int getMapID() { return mapID;}
+
+    /** Getter method for mapID
+     *
+     * @return - mapID
+     */
+    public int getMapID() {
+        return mapID;
+    }
 
     // PQ ordered by top being highest y value.
     // needed for 
 
-    public int compareTo(NPC npc){
-        if ( y > npc.y ) return -1;
-        else if ( y < npc.y ) return 1;
+    /** Compare function for priority queue. Orders top priority as highest y value.
+     *  Used to organize sprite draw order by highest to lowest y value.
+     *
+     * @param npc - npc to compare to
+     * @return - 1 if NPCs y is less than other NPCs y value. -1 if other NPC has less
+     *           y value than original NPC. 0 if equal y values.
+     */
+    public int compareTo(NPC npc) {
+        if (y > npc.y) return -1;
+        else if (y < npc.y) return 1;
         return 0;
     }
-    public void setZ(int i){
-        z = i;
-    }
 
-    public void addChat(String s){
+    /** Add chat options to NPC */
+    public void addChat(String s) {
+        s = fixChat(s);
         chat.add(s);
         currentChat = chat.get(0);
     }
-    public String getChat(){
+
+    private String fixChat(String str){
+
+        str = name +": " + str;
+
+        int i = MAX_NUM_CHAR;
+        int len = str.length();
+
+        while ( i <= len - 1 ){
+
+            // replace space with a newline
+            if ( str.charAt(i) != ' ' ){
+
+                // i holds index of first space previous and closest to original index or 0
+                while ( i >= 0 ){
+                    if ( str.charAt(i) == ' ' ) break;
+                    i--;
+                }
+
+            }
+            // replace space with newline
+
+            str = str.substring(0,i) + "\n" + str.substring(i+1);
+
+            i += MAX_NUM_CHAR;
+        }
+        /*
+        while ( i <= len - 1 ){
+
+            // replace space with a newline
+            if ( str.charAt(i) == ' ' ){
+                str = str.substring(0,i) + "\n" + str.substring(i+1);
+            }
+            else {
+                int wordIndex;
+                for ( wordIndex = i; wordIndex >= 0; wordIndex-- ) {
+                    if ( str.charAt(wordIndex) == ' ' ) break;
+                }
+                str = str.substring(0,wordIndex) + "\n" + str.substring(wordIndex);
+            }
+
+            str = str.substring(0,i) + "\n" + str.substring(i);
+            i += MAX_NUM_CHAR;
+        }
+        */
+        return str;
+
+    }
+
+    /** Return current chat option prompt */
+    public String getChat() {
         return currentChat;
     }
-    public void print(){
+
+    /** Print information about NPC (used in debugging) */
+    public void print() {
         System.out.println("Name: " + name + "\nID: " + ID + "\nmapID: " + mapID);
     }
 
