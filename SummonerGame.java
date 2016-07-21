@@ -26,9 +26,9 @@ public class SummonerGame extends ApplicationAdapter {
     private static final int HEIGHT = 1280;
 
     private static final int CHATOFFSET_X = -291;
-    private static final int CHATOFFSET_Y = -165;
+    private static final int CHATOFFSET_Y = -160;
 
-    private static final int MAINMENUOFFSET_X = 180;
+    private static final int MAINMENUOFFSET_X = 170;
     private static final int MAINMENUOFFSET_Y = 300;
 
     private SpriteBatch batch;
@@ -49,6 +49,8 @@ public class SummonerGame extends ApplicationAdapter {
     private FreeTypeFontGenerator.FreeTypeFontParameter parameter;
     private BitmapFont font; // normal text font
     private BitmapFont mmFont; // main menu font (smaller)
+    private static final int CHAT_SIZE = 30;
+    private static final int MENU_SIZE = 16;
     private String text;
     public float textDrawLength = 0.0f;
     public static float TEXTSPEED = 0.5f;
@@ -64,7 +66,7 @@ public class SummonerGame extends ApplicationAdapter {
         // creates normal text font
         generator = new FreeTypeFontGenerator(fh);
         parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
-        parameter.size = 34;
+        parameter.size = CHAT_SIZE;
         parameter.spaceX = 4;
         parameter.borderColor = Color.BLACK;
         parameter.kerning = true;
@@ -72,7 +74,8 @@ public class SummonerGame extends ApplicationAdapter {
         font = generator.generateFont(parameter);
 
         // creates smaller menu font
-        parameter.size = 33;
+        parameter.size = MENU_SIZE;
+        parameter.spaceY = 20;
         mmFont = generator.generateFont(parameter);
 
         // set fonts to black and fully visible
@@ -141,18 +144,27 @@ public class SummonerGame extends ApplicationAdapter {
             }
         }
 
+        if ( menuHandler.getNewChat() ) {
+            menuHandler.setNewChat(false);
+            textDrawLength = 0;
+        }
+
         // for drawing chat one character at a time
         if (menuHandler.getState() == MenuHandler.states.CHATTING) {
             text = menuHandler.getChat(); // get text from menuHandler which pulls from NPC
 
             if ((int) textDrawLength < text.length()) {
                 textDrawLength += (0.5f * TEXTSPEED);
-            } else menuHandler.setState(MenuHandler.states.INCHAT);
+            }
+            else menuHandler.setState(MenuHandler.states.INCHAT);
+
             font.draw(batch, text.substring(0, (int) textDrawLength), player.getX() + CHATOFFSET_X, player.getY() + CHATOFFSET_Y);
         }
         // display full text in case of INCHAT
         else if (menuHandler.getState() == MenuHandler.states.INCHAT) {
+
             text = menuHandler.getChat();
+
             textDrawLength = text.length();
             font.draw(batch, text.substring(0, (int) textDrawLength), player.getX() + CHATOFFSET_X, player.getY() + CHATOFFSET_Y);
         }

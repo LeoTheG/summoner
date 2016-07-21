@@ -65,7 +65,7 @@ public class NPCParser {
             numTotalNPCs = Integer.parseInt(line);
             //System.err.println("Num total NPCS: "+ numTotalNPCs);
         }
-        catch (Exception e) {System.err.println(e.getMessage()); }
+        catch (Exception e) {System.err.println("ERRORAF: " + e.getMessage()); }
 
         int pos = 0;
 
@@ -120,13 +120,21 @@ public class NPCParser {
                         //System.err.println("Skip");
                         break;
                     case 8:
-                        NPCText = line;
+                        //NPCText = line;
                         //System.err.println("Text: " + line);
                         break;
                 }
                 // after last line for NPC, create NPC object and add to lists
                 if (index == NUM_PROP_LINE - 1) {
-                    //System.err.println("Making new NPC at mapID: " + NPCMapID);
+
+                    /*
+                    while ( line.length() != 0 ){
+                        NPCText += line;
+                        line = in.readLine();
+                    }
+                    */
+
+                    NPCText = NPCName + ": " + line;
 
                     NPC npc = new NPC(NPCID, NPCX, NPCY, NPCMapID, NPCTexture, NPCName);
                     npc.addChat(NPCText);
@@ -138,10 +146,14 @@ public class NPCParser {
 
                     // add NPCID to NPCMapID slot in npcList(main indices of array represent map IDs)
                     npcList.get(NPCMapID).add(NPCID);
+
                 }
-            } catch (Exception e2) {
-                System.err.println("ERROR : " + e2.getMessage());
             }
+            catch (Exception e2) {
+                System.err.println("ERROR : " + e2.getMessage());
+                e2.printStackTrace();
+            }
+
             i++;
 
         }

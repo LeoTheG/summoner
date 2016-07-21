@@ -47,6 +47,12 @@ public class MenuHandler {
     private Point cursorPoint;
     private int cursorSelection;
 
+    private static final int CURSOR_OFFSET_X = 130;
+    private static final int CURSOR_OFFSET_Y = 260;
+    private static final int CURSOR_SELEC_Y = 36;
+
+    private boolean newChat;
+
     /** Constructor which begins states as FREE */
     public MenuHandler() {
         s = states.FREE;
@@ -55,10 +61,12 @@ public class MenuHandler {
         // properly scale menu items
         textBox.setScale(6.5f, 3.5f);
         mainMenuBox.setScale(3.5f, 2f);
-        cursor.setScale(0.3f, 0.3f);
+        cursor.setScale(0.2f, 0.2f);
 
         cursorPoint = new Point(0, 0);
         cursorSelection = 0;
+
+        newChat = true;
     }
 
     /**
@@ -69,23 +77,52 @@ public class MenuHandler {
     public void setPlayer(Player p) {
         player = p;
     }
+    public void setNewChat(boolean b){
+        newChat = b;
+    }
+    public boolean getNewChat(){
+        return newChat;
+    }
 
     /**
      * Change menu when SPACE is pressed depending on menu state
      */
-    public void pressedSpace() {
+    public void pressedSpace(NPC npc) {
+
+        if (npc == null)
+            setChat("");
 
         if (s == states.FREE) {
+
+            setChat(npc.getChat(true));
             if (currentChat.length() == 0) return;
             sprites.add(textBox);
             s = states.CHATTING;
-        } else if (s == states.CHATTING) {
-            //sprites.remove(textBox);
+
+        }
+        else if (s == states.CHATTING) {
+
             s = states.INCHAT;
-        } else if (s == states.INCHAT) {
+
+        }
+        else if (s == states.INCHAT) {
+
+            if ( npc.finishedChat() ) {
+                sprites.remove(textBox);
+                s = states.FREE;
+            }
+            else{
+                setChat(npc.getChat(true));
+                s = states.CHATTING;
+                newChat = true;
+            }
+            /*
             sprites.remove(textBox);
             s = states.FREE;
-        } else if (s == states.MAINMENU) {
+            */
+        }
+        else if (s == states.MAINMENU) {
+
         }
     }
 
@@ -199,7 +236,7 @@ public class MenuHandler {
         } else keysPressed[DOWN] = 0;
 
         // update cursorPoint
-        cursorPoint.x = player.getX() + 135;
-        cursorPoint.y = player.getY() + 260 - (33 * cursorSelection);
+        cursorPoint.x = player.getX() + CURSOR_OFFSET_X;
+        cursorPoint.y = player.getY() + CURSOR_OFFSET_Y - (CURSOR_SELEC_Y * cursorSelection);
     }
 }

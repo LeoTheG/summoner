@@ -317,14 +317,7 @@ public class Player {
                     // look for what tile player is facing
                     NPC npc = world.checkSpot(x / TILE_LENGTH, y / TILE_LENGTH, direction);
 
-                    // get chat from npc that player is facing (if any) and give to menuHandler
-                    if (npc != null)
-                        menuHandler.setChat(npc.getChat());
-
-                    else
-                        menuHandler.setChat("");
-
-                    menuHandler.pressedSpace();
+                    menuHandler.pressedSpace(npc);
                     numSPACEKeyPressed = 1;
                 }
             } else numSPACEKeyPressed = 0;

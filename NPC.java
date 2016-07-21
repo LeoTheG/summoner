@@ -26,12 +26,15 @@ public class NPC implements Comparable<NPC> {
     private String currentChat = "";
     private boolean battle;
 
+    private int chatLevel = 0;
+
     private ArrayList<String> chat;
 
     protected final static int TILE_LENGTH = 64;
 
     // maximum amount of characters allowed on a line
     private static final int MAX_NUM_CHAR = 16;
+    private static final int MAX_NUM_TEXT = 68;
 
     /** Constructor
      *
@@ -115,16 +118,96 @@ public class NPC implements Comparable<NPC> {
         return 0;
     }
 
-    /** Add chat options to NPC */
-    public void addChat(String s) {
-        s = fixChat(s);
-        chat.add(s);
-        currentChat = chat.get(0);
+    public void resetChatLevel(){
+        chatLevel = 0;
     }
 
-    private String fixChat(String str){
+    public boolean finishedChat(){
+        if ( chatLevel >= chat.size() ){
 
-        str = name +": " + str;
+            resetChatLevel();
+
+            return true;
+        }
+        return false;
+    }
+
+    /** Add chat options to NPC */
+    public void addChat(String s) {
+
+        System.err.println("Got str length " + s.length() + " : " + s);
+
+        int i = MAX_NUM_TEXT;
+
+        while ( i < s.length() ){
+
+            System.err.println(" i = " + i );
+
+            int count = 0;
+
+            // find first index that is space before point
+            while ( s.charAt(i) != ' ' ){
+                count++;
+                i--;
+            }
+            String portion = s.substring(i - MAX_NUM_TEXT + count, i);
+
+            System.err.println("Adding string of length " + portion.length() + " : " + portion);
+
+            chat.add(portion);
+
+            i += MAX_NUM_TEXT + 1;
+
+            System.err.println("Now i = " + i);
+        }
+
+        int len = s.length();
+
+        i -= MAX_NUM_TEXT;
+
+        chat.add( s.substring( i, s.length() ) );
+
+        for ( int j = 0; j < chat.size(); j++ ) {
+            // fix the text block and reinsert into arraylist
+            chat.set(j, fixChat(chat.get(j)) );
+        }
+
+        /*
+        int i = 0;
+
+
+
+        while ( i < len ) {
+            int numChar = MAX_NUM_TEXT;
+            if ( (numChar+i) >= len ) numChar = len - i;
+
+            //System.err.println("Adding chat : " + s.substring(i, i+numChar));
+
+            chat.add( s.substring(i, i+numChar) );
+
+            i += numChar;
+        }
+
+        /*
+        if ( i >= len ) chat.add(s);
+        else chat.add( s.substring(0,i) );
+
+        while ( i < s.length() ) {
+            System.err.println("Adding : " + s.substring(i-MAX_NUM_TEXT, i));
+            chat.add( s.substring(i-MAX_NUM_TEXT, i) );
+            i += MAX_NUM_TEXT;
+        }
+        */
+
+        //chat.add(s);
+
+
+        //chat.add(s);
+        //currentChat = chat.get(0);
+    }
+
+
+    private String fixChat(String str){
 
         int i = MAX_NUM_CHAR;
         int len = str.length();
@@ -147,31 +230,34 @@ public class NPC implements Comparable<NPC> {
 
             i += MAX_NUM_CHAR;
         }
-        /*
-        while ( i <= len - 1 ){
 
-            // replace space with a newline
-            if ( str.charAt(i) == ' ' ){
-                str = str.substring(0,i) + "\n" + str.substring(i+1);
-            }
-            else {
-                int wordIndex;
-                for ( wordIndex = i; wordIndex >= 0; wordIndex-- ) {
-                    if ( str.charAt(wordIndex) == ' ' ) break;
-                }
-                str = str.substring(0,wordIndex) + "\n" + str.substring(wordIndex);
-            }
-
-            str = str.substring(0,i) + "\n" + str.substring(i);
-            i += MAX_NUM_CHAR;
-        }
-        */
         return str;
 
     }
 
     /** Return current chat option prompt */
-    public String getChat() {
+    public String getChat(boolean incLevel) {
+
+        if ( chatLevel >= chat.size() ) {
+            if(incLevel)
+                chatLevel++;
+
+            String lastChat = chat.get(chat.size()-1);
+
+            System.err.println("LENGTH: " + currentChat.length() );
+            System.err.println(lastChat);
+
+            return lastChat;
+        }
+
+        currentChat = chat.get(chatLevel);
+
+        if ( chatLevel <= chat.size() )
+            if(incLevel)
+                chatLevel++;
+
+        System.err.println("LENGTH: " + currentChat.length() );
+        System.err.println(currentChat);
         return currentChat;
     }
 
