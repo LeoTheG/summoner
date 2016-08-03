@@ -35,13 +35,21 @@ public class Map {
         this.fileName = fileName;
         this.ID = ID;
 
-        tiledMap = new TmxMapLoader().load(this.fileName);
+        tiledMap = new TmxMapLoader().load("data/" + this.fileName);
 
         tiledMapTileLayer = (TiledMapTileLayer) tiledMap.getLayers().get(0);
         tiledMapRenderer = new OrthogonalTiledMapRenderer(tiledMap);
 
         width = tiledMapTileLayer.getWidth();
         height = tiledMapTileLayer.getHeight();
+    }
+
+    public int getHeight(){
+        return height;
+    }
+
+    public int getWidth(){
+        return width;
     }
 
     /**

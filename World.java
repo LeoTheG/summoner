@@ -28,7 +28,8 @@ public class World {
     private Point point;
 
     private Map[] maps = {new Map("maps\\house2.tmx", 0),
-            new Map("maps\\outside1.tmx", 1)
+            new Map("maps\\outside1.tmx", 1),
+            new Map("maps\\battleGrass.tmx", 2)
     };
     private NPC[] npcs;
 
@@ -42,6 +43,11 @@ public class World {
         this.npcParser = npcParser;
         // load map index
         currentMapIndex = p.getInteger("mapID", 0);
+
+        if ( currentMapIndex == 2 ) {
+            currentMapIndex = 1;
+        }
+
         currentMap = maps[currentMapIndex];
 
         // load NPCs
@@ -116,11 +122,15 @@ public class World {
             case 0:
                 point.x = 8;
                 point.y = 1;
-                ;
                 break;
             case 1:
                 point.x = 3;
                 point.y = 5;
+                break;
+            case 2:
+                System.err.println("Changing playerX and playerY to 10,10");
+                point.x = 10;
+                point.y = 10;
                 break;
         }
 

@@ -1,6 +1,10 @@
 package gharib.leonar.summoner;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.files.FileHandle;
+
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -33,8 +37,8 @@ public class NPCParser {
     /** Constructor which parses file upon creation */
     public NPCParser() {
         try {
-            FileReader NPCFile = new FileReader("characters\\NPCS\\NPCS.txt");
-            in = new BufferedReader(NPCFile);
+            FileHandle file = Gdx.files.internal("data/characters/NPCS/NPCS.txt");
+            in = new BufferedReader(file.reader());
         }
         catch(Exception e){System.err.println(e.getMessage());}
         parse();

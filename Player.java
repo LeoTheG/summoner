@@ -42,6 +42,8 @@ public class Player {
 
     private MenuHandler menuHandler;
 
+    //private Spell
+
     /**
      * Constructor for Player, sets up initial variables
      *
@@ -61,16 +63,27 @@ public class Player {
     private void init() {
 
         // load player's x and y values and direction
-        x = prefs.getInteger("playerX", 0);
-        y = prefs.getInteger("playerY", 0);
+        x = prefs.getInteger("playerX", 1 * TILE_LENGTH);
+        y = prefs.getInteger("playerY", 1 * TILE_LENGTH);
+        //x = 64;
+        //y = 64;
         direction = prefs.getInteger("playerDirection");
+
+        if ( x > world.getCurrentMap().getWidth() || x < 1 ) x = 1 * TILE_LENGTH;
+        if ( y > world.getCurrentMap().getHeight() || y < 1) y = 1 * TILE_LENGTH;
 
         // load textures for player
         textures = new Texture[4];
+        /*
         textures[FORWARD] = new Texture(new FileHandle(new File("characters\\PlayerTexture.png")));
         textures[BACKWARD] = new Texture(new FileHandle(new File("characters\\PlayerTextureBack.png")));
         textures[LEFT] = new Texture(new FileHandle(new File("characters\\PlayerTextureLeft.png")));
         textures[RIGHT] = new Texture(new FileHandle(new File("characters\\PlayerTextureRight.png")));
+        */
+        textures[FORWARD] = new Texture(Gdx.files.internal("data\\characters\\PlayerTexture.png"));
+        textures[BACKWARD] = new Texture(Gdx.files.internal("data\\characters\\PlayerTextureBack.png"));
+        textures[LEFT] = new Texture(Gdx.files.internal("data\\characters\\PlayerTextureLeft.png"));
+        textures[RIGHT] = new Texture(Gdx.files.internal("data\\characters\\PlayerTextureRight.png"));
 
         isMoving = false;
 
@@ -236,6 +249,17 @@ public class Player {
 
         return true;
     }
+    public void changeMapSetCoords(int doorID){
+        Point p = world.changeMap(doorID);
+        x = p.x * TILE_LENGTH;
+        y = p.y * TILE_LENGTH;
+    }
+    public void changeMapSetCoords(int doorID, int x, int y){
+        world.changeMap(doorID);
+        this.x = x;
+        this.y = y;
+        System.err.println("~~~~Reverting x,y to " + x + ", " + y);
+    }
 
     /**
      * Checks to see if player can move depending on direction they're facing and collisions in the direction
@@ -317,6 +341,7 @@ public class Player {
                     // look for what tile player is facing
                     NPC npc = world.checkSpot(x / TILE_LENGTH, y / TILE_LENGTH, direction);
 
+                    System.err.println("Pressed space");
                     menuHandler.pressedSpace(npc);
                     numSPACEKeyPressed = 1;
                 }

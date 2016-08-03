@@ -1,5 +1,6 @@
 package gharib.leonar.summoner;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
@@ -51,8 +52,8 @@ public class NPC implements Comparable<NPC> {
         this.y = y;
         this.mapID = MAPID;
 
-        String path = "characters/" + texturePath;
-        this.texture = new Texture(new FileHandle(new File(path)));
+        String path = "data/characters/" + texturePath;
+        this.texture = new Texture(Gdx.files.internal(path));
 
         this.name = name;
 
@@ -72,7 +73,7 @@ public class NPC implements Comparable<NPC> {
      * @return - true if NPC can battle, false otherwise.
      */
     public boolean getBattle() {
-        if (ID == 2) return true;
+        if (ID == 1) return true;
         else return false;
     }
 
@@ -135,13 +136,9 @@ public class NPC implements Comparable<NPC> {
     /** Add chat options to NPC */
     public void addChat(String s) {
 
-        System.err.println("Got str length " + s.length() + " : " + s);
-
         int i = MAX_NUM_TEXT;
 
         while ( i < s.length() ){
-
-            System.err.println(" i = " + i );
 
             int count = 0;
 
@@ -152,16 +149,11 @@ public class NPC implements Comparable<NPC> {
             }
             String portion = s.substring(i - MAX_NUM_TEXT + count, i);
 
-            System.err.println("Adding string of length " + portion.length() + " : " + portion);
-
             chat.add(portion);
 
             i += MAX_NUM_TEXT + 1;
 
-            System.err.println("Now i = " + i);
         }
-
-        int len = s.length();
 
         i -= MAX_NUM_TEXT;
 
@@ -172,40 +164,7 @@ public class NPC implements Comparable<NPC> {
             chat.set(j, fixChat(chat.get(j)) );
         }
 
-        /*
-        int i = 0;
-
-
-
-        while ( i < len ) {
-            int numChar = MAX_NUM_TEXT;
-            if ( (numChar+i) >= len ) numChar = len - i;
-
-            //System.err.println("Adding chat : " + s.substring(i, i+numChar));
-
-            chat.add( s.substring(i, i+numChar) );
-
-            i += numChar;
-        }
-
-        /*
-        if ( i >= len ) chat.add(s);
-        else chat.add( s.substring(0,i) );
-
-        while ( i < s.length() ) {
-            System.err.println("Adding : " + s.substring(i-MAX_NUM_TEXT, i));
-            chat.add( s.substring(i-MAX_NUM_TEXT, i) );
-            i += MAX_NUM_TEXT;
-        }
-        */
-
-        //chat.add(s);
-
-
-        //chat.add(s);
-        //currentChat = chat.get(0);
     }
-
 
     private String fixChat(String str){
 
@@ -244,9 +203,6 @@ public class NPC implements Comparable<NPC> {
 
             String lastChat = chat.get(chat.size()-1);
 
-            System.err.println("LENGTH: " + currentChat.length() );
-            System.err.println(lastChat);
-
             return lastChat;
         }
 
@@ -256,8 +212,6 @@ public class NPC implements Comparable<NPC> {
             if(incLevel)
                 chatLevel++;
 
-        System.err.println("LENGTH: " + currentChat.length() );
-        System.err.println(currentChat);
         return currentChat;
     }
 
