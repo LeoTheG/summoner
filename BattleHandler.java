@@ -8,6 +8,8 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.TimeUtils;
 
+import java.util.ArrayList;
+
 /* Author       : Leonar Gharib
    Date Created : 7/20/2016
    Purpose      : Used to resolve battles.
@@ -19,6 +21,8 @@ public class BattleHandler {
    private double startTime;
    private Spirit playerSp;
    private Spirit enemySp;
+
+   private ArrayList<Spell> playerSpells = new ArrayList<Spell>();
 
    private boolean pressedSpace;
    private boolean canBegin;
@@ -35,12 +39,12 @@ public class BattleHandler {
    private static int ENEMY_BARS_XOFFSET = -200;
    private static int ENEMY_BARS_YOFFSET = 150;
 
-   private Spell[] playerSpells;
-
    private boolean flagEndBattle;
 
+   private NPC enemyNPC;
+
    public enum battleStates {
-      FREE, BEG, BEG_COMP, MAIN, SPELL, PACK
+      FREE, BEG, BEG_COMP, MAIN, SPELL, PACK, END
    }
 
    private boolean setBarXY;
@@ -48,6 +52,8 @@ public class BattleHandler {
    private battleStates bs;
 
    private static final double tickSpeed = 0.8;
+
+   private Player player;
 
    /** Constructor */
    public BattleHandler(){
@@ -78,6 +84,12 @@ public class BattleHandler {
 
       setBarXY = false;
 
+      enemyNPC = null;
+
+   }
+   public void setPlayer(Player p){
+      player = p;
+      playerSpells = player.getSpells();
    }
 
    public boolean run(){
@@ -85,14 +97,27 @@ public class BattleHandler {
       setBarXY = false;
       return true;
    }
+   public NPC getEnemyNPC(){
+      return enemyNPC;
+   }
 
    public Sprite[] getSprites(){
 
+      System.err.println("Getting sprites");
+
       Sprite[] arr = new Sprite[2];
+
       arr[0] = playerSp.getSprite();
-      Sprite enemySprite = enemySp.getSprite();
-      //enemySprite.flip(true,false);
-      arr[1] = enemySprite;
+
+
+      if ( !enemySp.getFlopped() && bs == battleStates.END) {
+         System.err.println("Flopping enemy");
+         enemySp.flop(true);
+      }
+      else
+         System.err.println("Not flopping enemy");
+
+      arr[1] = enemySp.getSprite();
 
       return arr;
    }
@@ -101,8 +126,11 @@ public class BattleHandler {
 
       float lifePerc = (float)enemySp.getHP() / (float)enemySp.getMaxHP();
       float energyPerc = (float) playerSp.getEnergy() / (float) playerSp.getMaxEnergy();
+      float manaPerc = (float) playerSp.getMana() / (float) playerSp.getMaxMana();
 
       for ( Sprite s : bars ) {
+         if ( s == bars[1] )
+            s.setScale(manaPerc, 1);
          if ( s == bars[3] )
             s.setScale(lifePerc, 1);
          if ( s == bars[2] )
@@ -139,15 +167,58 @@ public class BattleHandler {
       return playerSp.getAtkCost();
    }
 
+   public boolean playerCanCast(int spellIndex){
+
+      Spell playerSpell = playerSpells.get(spellIndex);
+
+      int energyCost = playerSpell.getEnergyCost();
+      int magicCost = playerSpell.getMagicCost();
+
+      int playerEnergy = playerSp.getEnergy();
+      int playerMana = playerSp.getMana();
+
+      if ( playerEnergy >= energyCost && playerMana >= magicCost ) return true;
+      else return false;
+
+   }
+
    public void handle(){
 
    }
 
-   public void castSpell(int selection){
+   public boolean castSpell(int selection){
+      if ( playerCanCast(selection) ){
 
+         Spell spell = playerSpells.get(selection);
+
+         int spellDamage = spell.getDamage();
+         int enemyDef = enemySp.getDefense();
+
+         // calculate spell damage
+         int damageInflicted = spellDamage - enemyDef;
+
+         enemySp.takeDamage(damageInflicted);
+         if ( enemySp.getHP() < 0 ) enemySp.setHP(0);
+
+         playerSp.loseMana(spell.getMagicCost());
+         playerSp.loseEnergy(spell.getEnergyCost());
+
+         if ( enemySp.getHP() <= 0 ) {
+            System.err.println("Flagging end battle");
+            flagEndBattle = true;
+         }
+         return true;
+      }
+      else return false;
    }
 
    public String[] getMainText(){
+
+      if ( flagEndBattle ) {
+         String[] strArr = {"Defeated enemy!"};
+         return strArr;
+      }
+
       return options;
    }
 
@@ -158,20 +229,39 @@ public class BattleHandler {
    public void attack(boolean onPlayer){
       if ( onPlayer ) playerSp.attackedBy(enemySp);
       else {
-         enemySp.attackedBy(playerSp);
+         if ( playerSp.getEnergy() < playerSp.getAtkCost() ) return;
+         playerSp.loseEnergy(playerSp.getAtkCost());
+         System.err.println("Energy now at : " + playerSp.getEnergy());
+         enemySp.takeDamage(playerSp.getAttackDamage() - enemySp.getDefense());
+
+         if ( enemySp.getHP() < 0 ) enemySp.setHP(0);
+
+         if ( enemySp.getHP() <= 0 ) {
+            System.err.println("Flagging end battle");
+            flagEndBattle = true;
+            enemySp.flop(true);
+         }
       }
    }
    public String[] getSpellText(){
-      String[] strings = {playerSp.getSpell().getName()};
 
-      return strings;
+      String[] spellTexts = new String[playerSpells.size()];
+
+      for (int i = 0; i < playerSpells.size(); i++) {
+         spellTexts[i] = playerSpells.get(i).getName();
+      }
+
+      return spellTexts;
    }
 
    public boolean checkTimer(){
 
-      if ( enemySp.getHP() == 0 ) {
+      /*
+      if ( enemySp.getHP() == 0  ) {
+         System.err.println("Flagging end battle");
          flagEndBattle = true;
       }
+      */
 
       double elapsedTime = TimeUtils.timeSinceMillis((long)startTime);
 
@@ -198,9 +288,11 @@ public class BattleHandler {
       else return "";
    }
 
-   public void begin(Spirit playerSp, Spirit enemySp, int playerX, int playerY) {
+   public void begin(Spirit playerSp, Spirit enemySp, NPC enemyNPC) {
 
       //playerSpells = playerSp.getSpells();
+
+      this.enemyNPC = enemyNPC;
 
       if ( !setBarXY ) {
          setBarXY = true;
@@ -225,6 +317,9 @@ public class BattleHandler {
       if (enemySp.getFlipped() == false ) {
          enemySp.flip();
       }
+      if ( enemySp.getFlopped() == true ) {
+         enemySp.unFlop(true);
+      }
 
 
    }
@@ -235,6 +330,9 @@ public class BattleHandler {
       if ( checkTimer() ) {
          playerSp.regenEnergy();
          enemySp.regenEnergy();
+
+         playerSp.regenMana();
+         enemySp.regenMana();
 
 
 

@@ -8,6 +8,8 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 
 import java.io.File;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 
 /* Author       : Leonar Gharib
    Date Created : 6/15/2015
@@ -20,6 +22,9 @@ public class Player {
     private static final int TILE_LENGTH = 64; //the width and height of the game tiles (square tiles where width = height)
     private static final int SPEED = 4; //the player's movement speed
     private static final int FORWARD = 0, RIGHT = 1, BACKWARD = 2, LEFT = 3; //player's direction constants
+
+    public enum directions { FORWARD, RIGHT, BACKWARD, LEFT }
+
     //player's (x, y) coordinates
     private int x;
     private int y;
@@ -42,6 +47,10 @@ public class Player {
 
     private MenuHandler menuHandler;
 
+    private Journal journal;
+    private Bag bag;
+    private directions direc;
+
     //private Spell
 
     /**
@@ -51,26 +60,47 @@ public class Player {
      * @param m - menuHandler which draws menu and handles menu keyboard input; player gives information
      * @world w - World in which
      */
-    public Player(Preferences p, World w, MenuHandler m) {
+    public Player(Preferences p, World w, MenuHandler m, SpellParser s) {
         world = w;
         prefs = p;
         menuHandler = m;
 
-        init();
+
+        init(s);
     }
 
     /* Initializes certain variables, called in constructor */
-    private void init() {
+    private void init(SpellParser s) {
 
         // load player's x and y values and direction
         x = prefs.getInteger("playerX", 1 * TILE_LENGTH);
         y = prefs.getInteger("playerY", 1 * TILE_LENGTH);
-        //x = 64;
-        //y = 64;
+
+        System.err.println("Save x,y = " + x + ", " + y);
+       // x = 64;
+       //y = 64;
         direction = prefs.getInteger("playerDirection");
 
-        if ( x > world.getCurrentMap().getWidth() || x < 1 ) x = 1 * TILE_LENGTH;
-        if ( y > world.getCurrentMap().getHeight() || y < 1) y = 1 * TILE_LENGTH;
+        // load direction
+        switch ( direction ) {
+            case FORWARD:
+                direc = directions.FORWARD;
+                break;
+            case LEFT:
+                direc = directions.LEFT;
+                break;
+            case RIGHT:
+                direc = directions.RIGHT;
+                break;
+            case BACKWARD:
+                direc = directions.BACKWARD;
+                break;
+        }
+
+        System.err.println("World width/height = " + world.getCurrentMap().getWidth() + ", " + world.getCurrentMap().getHeight() );
+
+        if ( (x/TILE_LENGTH) > world.getCurrentMap().getWidth() || x < 1 ) x = 1 * TILE_LENGTH;
+        if ( (y/TILE_LENGTH) > world.getCurrentMap().getHeight() || y < 1) y = 1 * TILE_LENGTH;
 
         // load textures for player
         textures = new Texture[4];
@@ -94,6 +124,23 @@ public class Player {
         playerSprites[LEFT] = new Sprite(textures[LEFT]);
         playerSprites[RIGHT] = new Sprite(textures[RIGHT]);
 
+        journal = new Journal();
+        bag = new Bag(this);
+
+        setSpellParser(s);
+        journal.addSpell(0);
+
+    }
+    public Bag getBag(){
+        return bag;
+    }
+
+    public void addSpell(int ID){
+        journal.addSpell(ID);
+    }
+
+    public ArrayList<Spell> getSpells(){
+        return journal.getSpells();
     }
 
     /* Fixes the x & y  coordinate of Player if Player is not exactly within bounds of a block */
@@ -127,7 +174,7 @@ public class Player {
      *
      * @param dir - the direction that Player is facing, set through constants FORWARD, RIGHT, BACKWARD, and LEFT
      */
-    public void move(int dir) {
+    public void move(directions dir) {
         switch (dir) {
             case FORWARD:
                 y += SPEED;
@@ -158,8 +205,39 @@ public class Player {
      *
      * @return - an integer representation of Player's direction, one of 4 values (0 through 3)
      */
-    public int getDirection() {
-        return direction;
+    public int getDirectionID() {
+        switch ( direc ) {
+            case FORWARD:
+                return 0;
+            case RIGHT:
+                return 1;
+            case BACKWARD:
+                return 2;
+            case LEFT:
+                return 3;
+        }
+        return -1;
+    }
+
+    public directions getDirection() {
+        return direc;
+    }
+
+    public void updateDirection(){
+        switch ( direc ) {
+            case FORWARD:
+                direction = 0;
+                break;
+            case RIGHT:
+                direction = 1;
+                break;
+            case BACKWARD:
+                direction = 2;
+                break;
+            case LEFT:
+                direction = 3;
+                break;
+        }
     }
 
     /**
@@ -168,6 +246,7 @@ public class Player {
      * @return - a Sprite object representing Player's current sprite
      */
     public Sprite getPlayerSprite() {
+        updateDirection();
         return playerSprites[direction];
     }
 
@@ -214,16 +293,16 @@ public class Player {
         int newX = 0;
         int newY = 0;
 
-        if (dir == FORWARD) {
+        if (direc == directions.FORWARD) {
             newX = playerX;
             newY = playerY + 1;
-        } else if (dir == BACKWARD) {
+        } else if (direc == directions.BACKWARD) {
             newX = playerX;
             newY = playerY - 1;
-        } else if (dir == LEFT) {
+        } else if (direc == directions.LEFT) {
             newX = playerX - 1;
             newY = playerY;
-        } else if (dir == RIGHT) {
+        } else if (direc == directions.RIGHT) {
             newX = playerX + 1;
             newY = playerY;
         }
@@ -280,16 +359,16 @@ public class Player {
         int newX = 0;
         int newY = 0;
 
-        if (dir == FORWARD) {
+        if (direc == directions.FORWARD) {
             newX = playerX;
             newY = playerY + 1;
-        } else if (dir == BACKWARD) {
+        } else if (direc == directions.BACKWARD) {
             newX = playerX;
             newY = playerY - 1;
-        } else if (dir == LEFT) {
+        } else if (direc == directions.LEFT) {
             newX = playerX - 1;
             newY = playerY;
-        } else if (dir == RIGHT) {
+        } else if (direc == directions.RIGHT) {
             newX = playerX + 1;
             newY = playerY;
         }
@@ -341,7 +420,6 @@ public class Player {
                     // look for what tile player is facing
                     NPC npc = world.checkSpot(x / TILE_LENGTH, y / TILE_LENGTH, direction);
 
-                    System.err.println("Pressed space");
                     menuHandler.pressedSpace(npc);
                     numSPACEKeyPressed = 1;
                 }
@@ -361,12 +439,12 @@ public class Player {
             // handle W key
             if (Gdx.input.isKeyPressed(Input.Keys.W)) {
 
-                if (direction == FORWARD && numWKeyPressed > KEY_SENSITIVITY) {
+                if (direc == directions.FORWARD && numWKeyPressed > KEY_SENSITIVITY) {
                     if (canMove())
                         moveCounterUp = TILE_LENGTH / 4;
                 } else {
                     if (menuHandler.getState() == MenuHandler.states.FREE) {
-                        changeDirection(FORWARD);
+                        changeDirection(directions.FORWARD);
                     }
                     moveCounterUp = 0;
                 }
@@ -374,13 +452,13 @@ public class Player {
             }
             if (Gdx.input.isKeyPressed((Input.Keys.S))) {
 
-                if (direction == BACKWARD && numSKeyPressed > KEY_SENSITIVITY) {
+                if (direc == directions.BACKWARD && numSKeyPressed > KEY_SENSITIVITY) {
 
                     if (canMove())
                         moveCounterDown = TILE_LENGTH / 4;
                 } else {
                     if (menuHandler.getState() == MenuHandler.states.FREE) {
-                        changeDirection(BACKWARD);
+                        changeDirection(directions.BACKWARD);
                     }
                     moveCounterDown = 0;
                 }
@@ -388,13 +466,13 @@ public class Player {
             }
             if (Gdx.input.isKeyPressed(Input.Keys.A)) {
 
-                if (direction == LEFT && numAKeyPressed > KEY_SENSITIVITY) {
+                if (direc == directions.LEFT && numAKeyPressed > KEY_SENSITIVITY) {
 
                     if (canMove())
                         moveCounterLeft = TILE_LENGTH / 4;
                 } else {
                     if (menuHandler.getState() == MenuHandler.states.FREE) {
-                        changeDirection(LEFT);
+                        changeDirection(directions.LEFT);
                     }
                     moveCounterLeft = 0;
                 }
@@ -402,13 +480,13 @@ public class Player {
             }
             if (Gdx.input.isKeyPressed(Input.Keys.D)) {
 
-                if (direction == RIGHT && numDKeyPressed > KEY_SENSITIVITY) {
+                if (direc == directions.RIGHT && numDKeyPressed > KEY_SENSITIVITY) {
 
                     if (canMove())
                         moveCounterRight = TILE_LENGTH / 4;
                 } else {
                     if (menuHandler.getState() == MenuHandler.states.FREE) {
-                        changeDirection(RIGHT);
+                        changeDirection(directions.RIGHT);
                     }
                     moveCounterRight = 0;
                 }
@@ -418,22 +496,22 @@ public class Player {
 
         if (moveCounterUp != 0) {
             moveCounterUp--;
-            move(FORWARD);
+            move(directions.FORWARD);
             isMoving = true;
         }
         if (moveCounterDown != 0) {
             moveCounterDown--;
-            move(BACKWARD);
+            move(directions.BACKWARD);
             isMoving = true;
         }
         if (moveCounterLeft != 0) {
             moveCounterLeft--;
-            move(LEFT);
+            move(directions.LEFT);
             isMoving = true;
         }
         if (moveCounterRight != 0) {
             moveCounterRight--;
-            move(RIGHT);
+            move(directions.RIGHT);
             isMoving = true;
         }
 
@@ -444,8 +522,8 @@ public class Player {
      *
      * @param dir - the direction to which the player is attempting to change (an integer value of 4 possibilities 0 through 3)
      */
-    public void changeDirection(int dir) {
-        direction = dir;
+    public void changeDirection(directions dir) {
+        direc = dir;
     }
 
     /**
@@ -455,5 +533,48 @@ public class Player {
      */
     private boolean isMoving() {
         return isMoving = (moveCounterUp != 0 || moveCounterDown != 0 || moveCounterLeft != 0 || moveCounterRight != 0);
+    }
+    public void setSpellParser(SpellParser sp){
+        if ( sp == null ) System.err.println("SPELLPARSER is NULL");
+        if ( journal == null ) System.err.println("journal is NULL");
+        journal.setSpellParser(sp);
+    }
+
+    // TODO: Add search/list of objects referenced with ID
+    public boolean getItem(int objectID){
+        if ( objectID == 0 ) {
+            bag.addItem(Bag.type.BERRY, Bag.identifier.RED);
+            return true;
+        }
+        return false;
+    }
+    public int getMapX(){
+        return x / TILE_LENGTH;
+    }
+    public int getMapY(){
+        return y / TILE_LENGTH;
+    }
+
+}
+class Journal{
+    private ArrayList<Spell> spells;
+    private SpellParser spellParser;
+
+    public Journal(){
+        spells = new ArrayList<Spell>();
+    }
+    public void setSpellParser(SpellParser sp){
+        spellParser = sp;
+    }
+
+    public void addSpell(int spellID){
+
+        spells.add(spellParser.getSpell(spellID));
+    }
+    public void removeSpell(int spellID){
+        spells.remove(spellParser.getSpell(spellID));
+    }
+    public ArrayList<Spell> getSpells(){
+        return spells;
     }
 }

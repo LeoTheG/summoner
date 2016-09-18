@@ -100,6 +100,38 @@ public class Map {
         return mapID;
     }
 
+    public int getObjectID(int x, int y) {
+        TiledMapTileLayer.Cell cell = tiledMapTileLayer.getCell(x, y);
+
+        MapLayers mp = tiledMap.getLayers();
+        int numLayers = mp.getCount();
+
+        // safety check that there is an object layer (only layer with tiles with property "Passable"
+        if (numLayers == 1){
+            System.err.println("Only 1 layer");
+            return -1;
+        }
+
+        TiledMapTileLayer tiledMapTileLayerObject = (TiledMapTileLayer) tiledMap.getLayers().get(1);
+
+        TiledMapTileLayer.Cell cellObject = tiledMapTileLayerObject.getCell(x, y);
+
+        System.err.println("Checking x, y at " + x + ", " + y);
+
+        int ID = -1;
+
+        if (cellObject != null) {
+            System.err.println("Object is not null");
+            if( cellObject.getTile().getProperties().get("Object") != null){
+                System.err.println("Object is not null");
+                ID = Integer.parseInt((String) cellObject.getTile().getProperties().get("ID"));
+                System.err.println("Got ID");
+            }
+        }
+
+        return ID;
+    }
+
     /**
      * Gets "Passable" property of tile at certain point
      *

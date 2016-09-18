@@ -26,6 +26,8 @@ public class NPC implements Comparable<NPC> {
     private String name;
     private String currentChat = "";
     private boolean battle;
+    private boolean defeated;
+    private boolean canBattle;
 
     private int chatLevel = 0;
 
@@ -66,6 +68,10 @@ public class NPC implements Comparable<NPC> {
         chat = new ArrayList<String>();
 
         battle = false;
+        defeated = false;
+        canBattle = false;
+
+        if ( ID == 1 ) canBattle = true;
     }
 
     /** Determine if NPC can battle or not
@@ -73,8 +79,18 @@ public class NPC implements Comparable<NPC> {
      * @return - true if NPC can battle, false otherwise.
      */
     public boolean getBattle() {
-        if (ID == 1) return true;
-        else return false;
+        return canBattle;
+    }
+
+    public void setDefeated(boolean d){
+        defeated = d;
+
+        if ( defeated ) {
+
+            chat = new ArrayList<String>();
+            addChat(name + ": You defeated me...");
+            canBattle = false;
+        }
     }
 
     /** Sets x,y values for sprite and returns sprite

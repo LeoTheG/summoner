@@ -44,6 +44,7 @@ public class SummonerGame extends ApplicationAdapter {
     private Preferences prefs;
 
     private NPCParser npcParser;
+    private SpellParser spellParser;
 
     // for drawing text on the screen
     private String fontName = "data/UI/fonts/prstart.ttf";
@@ -65,8 +66,6 @@ public class SummonerGame extends ApplicationAdapter {
 
     @Override
     public void create() {
-
-        shapeRenderer = new ShapeRenderer();
 
         // creates normal text font
         text = "";
@@ -101,21 +100,26 @@ public class SummonerGame extends ApplicationAdapter {
         batch = new SpriteBatch();
 
         npcParser = new NPCParser();
+        spellParser = new SpellParser();
+
 
         world = new World(prefs, npcParser);
         camera = new OrthographicCamera(WIDTH, HEIGHT);
         tiledMapRenderer = world.getTiledMapRenderer();
-        player = new Player(prefs, world, menuHandler);
+
+        player = new Player(prefs, world, menuHandler, spellParser);
+
         camera.zoom = (float) 0.5;
 
         // gives world object access to NPCHandler and menuHandler access to player
         battleHandler = new BattleHandler();
+        battleHandler.setPlayer(player);
         npcHandler = new NPCHandler(batch);
         world.setNPCHandler(npcHandler);
         menuHandler.setPlayer(player);
         menuHandler.setBattleHandler(battleHandler);
-
-
+        menuHandler.setPreferences(prefs);
+        menuHandler.setWorld(world);
 
         //battleHandler.begin(spirit1, spirit2);
 
@@ -269,12 +273,20 @@ public class SummonerGame extends ApplicationAdapter {
             battleHandler.tick();
 
         }
+        else if ( battleState == BattleHandler.battleStates.SPELL ) {
+
+            menuHandler.drawBattleSpellText(batch,font,grayFont);
+            battleHandler.tick();
+        }
+        else if ( battleState == BattleHandler.battleStates.END ) {
+            menuHandler.drawBattleMainText(batch,font,grayFont);
+        }
         // draw no text if player is not in menu or chatting
         else if (menuHandler.getState() == MenuHandler.states.FREE) {
             textDrawLength = 0;
         }
 
-        if ( menuState == MenuHandler.states.BATTLE ) {
+        if ( menuState == MenuHandler.states.BATTLE && battleState != BattleHandler.battleStates.END ) {
             battleHandler.renderBars(batch);
 
             Gdx.gl.glDisable(GL20.GL_BLEND);
@@ -288,10 +300,12 @@ public class SummonerGame extends ApplicationAdapter {
     public void dispose() {
         player.fixXY();
         // save player's x,y position, their direction, and the map they are on
+        /*
         prefs.putInteger("playerX", player.getX());
         prefs.putInteger("playerY", player.getY());
         prefs.putInteger("playerDirection", player.getDirection());
         prefs.putInteger("mapID", world.getCurrentMapIndex());
+        */
         prefs.flush();
         generator.dispose();
     }

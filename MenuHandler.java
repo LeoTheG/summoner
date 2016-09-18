@@ -2,6 +2,7 @@ package gharib.leonar.summoner;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -21,7 +22,7 @@ public class MenuHandler {
     // INCHAT - player has finished text displayed on his screen (CHATTING progresses to INCHAT)
     // MAINMENU - player is in main menu where they can choose multiple options
     public enum states {
-        FREE, CHATTING, INCHAT, MAINMENU, BATTLE
+        FREE, CHATTING, INCHAT, MAINMENU, BATTLE, PACK
     }
 
     private states s;
@@ -69,8 +70,8 @@ public class MenuHandler {
     private static int MONSTER_ENEMY_SPRITE_XOFFSET = -200;
     private static int MONSTER_ENEMY_SPRITE_YOFFSET = 45;
 
-    private Spirit spirit1 = new Spirit(10,15,30,5,5,100);
-    private Spirit spirit2 = new Spirit(10,15,30,5,5,100);
+    private Spirit spirit1 = new Spirit(10,50,30,5,5,100);
+    private Spirit spirit2 = new Spirit(10,50,30,5,5,100);
 
     private boolean newChat;
     private boolean pressedSpace;
@@ -78,6 +79,10 @@ public class MenuHandler {
     private boolean pressedE = false;
     private boolean pressedZ = false;
     private boolean pressedX = false;
+
+    private Preferences pref;
+
+    private World world;
 
 
     private int previousMapIndex = 0;
@@ -129,6 +134,12 @@ public class MenuHandler {
         return newChat;
     }
     public void setBattleHandler (BattleHandler b){ battleHandler = b;}
+    public void setPreferences(Preferences p){
+        pref = p;
+    }
+    public void setWorld(World w){
+        world = w;
+    }
 
     public int getPreviousMapIndex(){
         return previousMapIndex;
@@ -146,10 +157,40 @@ public class MenuHandler {
 
     /**
      * Change menu when SPACE is pressed depending on menu state
+     * Also used for interacting with objects in world (on tile layer 2)
      */
     public void pressedSpace(NPC npc) {
 
         BattleHandler.battleStates bs = battleHandler.getBattleState();
+
+        int playerX = player.getMapX();
+        int playerY = player.getMapY();
+        Player.directions playerDirection = player.getDirection();
+
+        int adjustedX = playerX, adjustedY = playerY;
+
+        switch ( playerDirection ) {
+            case FORWARD:
+                adjustedY += 1;
+                break;
+            case RIGHT:
+                adjustedX += 1;
+                break;
+            case LEFT:
+                adjustedX -= 1;
+                break;
+            case BACKWARD:
+                adjustedY -= 1;
+                break;
+        }
+
+        int objectID = world.getCurrentMap().getObjectID(adjustedX, adjustedY);
+
+        // IDs > -1 indicate object
+        if ( objectID > -1 ) {
+            player.getItem(objectID);
+            return;
+        }
 
         if (npc == null) {
             setChat("");
@@ -182,7 +223,7 @@ public class MenuHandler {
 
                     s = states.BATTLE;
                     cursorSelection = 0;
-                    battleHandler.begin(spirit1, spirit2, player.getX(), player.getY());
+                    battleHandler.begin(spirit1, spirit2, npc);
 
                     monsterSprites = battleHandler.getSprites();
 
@@ -302,16 +343,6 @@ public class MenuHandler {
         currentChat = str;
     }
 
-    public void drawSpellText(Batch b, BitmapFont f, BitmapFont gf){
-
-        String[] spellText = battleHandler.getSpellText();
-
-        for ( int i = 0; i < spellText.length; i++ ) {
-            //int x =
-            //f.draw(b, battleHandler.getSpellText()[i], x, y);
-        }
-    }
-
     public void drawBattleMainText(Batch b, BitmapFont f, BitmapFont grayFont){
 
         for( int i = 0; i < battleHandler.getMainText().length; i++ ) {
@@ -319,24 +350,55 @@ public class MenuHandler {
             int x = player.getX() + BATTLE_MAIN_XOFFSET;
             int y = player.getY() + BATTLE_MAIN_YOFFSET;
 
-            if ( i == 1 || i == 3 ) x += 380;
-            if ( i == 2 || i == 3 ) y += -97;
-
-            if ( i == 0 ) {
-                if ( battleHandler.getPlayerEnergy() < battleHandler.getPlayerAtkCost() ){
-                    grayFont.draw(b, battleHandler.getMainText()[0], x, y);
-                }
-                else {
-                    f.draw(b, battleHandler.getMainText()[0], x, y);
-                }
+            if ( battleHandler.getFlagEndBattle() ) {
+                f.draw(b, battleHandler.getMainText()[0], x, y);
             }
+            else {
 
-            else
-                f.draw(b, battleHandler.getMainText()[i], x, y);
+                if (i == 1 || i == 3) x += 380;
+                if (i == 2 || i == 3) y += -97;
+
+                if (i == 0) {
+                    if (battleHandler.getPlayerEnergy() < battleHandler.getPlayerAtkCost()) {
+                        grayFont.draw(b, battleHandler.getMainText()[0], x, y);
+                    } else {
+                        f.draw(b, battleHandler.getMainText()[0], x, y);
+                    }
+                }
+                else if ( i == 2 ) {
+                    if ( player.getBag().getNumItems() > 0 ) {
+                        f.draw(b, battleHandler.getMainText()[2], x, y);
+                    }
+                    else{
+                        grayFont.draw(b, battleHandler.getMainText()[2], x, y);
+                    }
+                }
+                // RUN should be grayed out at certain times
+                else
+                    f.draw(b, battleHandler.getMainText()[i], x, y);
+
+            }
 
 
         }
 
+    }
+    public void drawBattleSpellText(Batch b, BitmapFont f, BitmapFont grayFont){
+        for( int i = 0; i < battleHandler.getSpellText().length; i++ ) {
+
+            int x = player.getX() + BATTLE_MAIN_XOFFSET;
+            int y = player.getY() + BATTLE_MAIN_YOFFSET;
+
+            if ( i == 1 || i == 3 ) x += 380;
+            if ( i == 2 || i == 3 ) y += -97;
+
+            if ( battleHandler.playerCanCast(i) )
+                f.draw(b, battleHandler.getSpellText()[i], x, y);
+            else
+                grayFont.draw(b, battleHandler.getSpellText()[i], x, y);
+
+
+        }
     }
     public Point getPreviousPoint(){
         return previousPoint;
@@ -349,19 +411,35 @@ public class MenuHandler {
 
         BattleHandler.battleStates bs = battleHandler.getBattleState();
 
-        if ( battleHandler.getFlagEndBattle() ) {
-            battleHandler.setBattleState(BattleHandler.battleStates.FREE);
-            setState(states.FREE);
-            sprites.remove(monsterSprites[0]);
-            sprites.remove(monsterSprites[1]);
-            sprites.remove(cursorBattle);
-            battleHandler.setFlagEndBattle(false);
-        }
-
         if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
             if ( !pressedSpace ) {
 
                 pressedSpace = true;
+
+                // SAVE option
+                if ( getState() == states.MAINMENU ) {
+
+                    // PACK
+                    if ( cursorSelection == 0 ) {
+                        s = states.PACK;
+                    }
+                    // SPIRITS
+                    else if ( cursorSelection == 1) {
+
+                    }
+
+                    else if ( cursorSelection == 3 ) {
+                        System.err.println("Saving game");
+                        pref.putInteger("playerX", player.getX());
+                        pref.putInteger("playerY", player.getY());
+                        pref.putInteger("playerDirection", player.getDirectionID());
+                        pref.putInteger("mapID", world.getCurrentMapIndex());
+
+                        s = states.FREE;
+                        sprites.remove(mainMenuBox);
+                        sprites.remove(cursor);
+                    }
+                }
 
                 if ( bs == BattleHandler.battleStates.BEG ){
                     setNewChat(false);
@@ -387,7 +465,8 @@ public class MenuHandler {
                     }
                     // PACK
                     else if ( cursorSelection == 2 ) {
-                        battleHandler.setBattleState(BattleHandler.battleStates.PACK);
+                        if ( player.getBag().getNumItems() > 0 )
+                            battleHandler.setBattleState(BattleHandler.battleStates.PACK);
                     }
                     // RUN
                     else if ( cursorSelection == 3 ) {
@@ -397,55 +476,39 @@ public class MenuHandler {
                             sprites.remove(monsterSprites[0]);
                             sprites.remove(monsterSprites[1]);
                             sprites.remove(cursorBattle);
+                            sprites.remove(textBox);
                         }
                     }
                 }
                 else if ( bs == BattleHandler.battleStates.SPELL ) {
+                    if ( battleHandler.castSpell(cursorSelection) )
+                        battleHandler.setBattleState(BattleHandler.battleStates.MAIN);
+                }
 
+                if ( battleHandler.getFlagEndBattle() ) {
+                    monsterSprites = battleHandler.getSprites();
+                    sprites.remove(cursorBattle);
+                    battleHandler.setBattleState(BattleHandler.battleStates.END);
+
+                }
+                if ( bs == BattleHandler.battleStates.END ) {
+                    monsterSprites = battleHandler.getSprites();
+
+                    battleHandler.setBattleState(BattleHandler.battleStates.FREE);
+                    setState(states.FREE);
+
+                    sprites.remove(monsterSprites[0]);
+                    sprites.remove(monsterSprites[1]);
+
+                    sprites.remove(textBox);
+
+                    battleHandler.setFlagEndBattle(false);
+                    battleHandler.getEnemyNPC().setDefeated(true);
                 }
             }
 
         }
          else pressedSpace = false;
-
-        /*
-        if (Gdx.input.isKeyPressed(Input.Keys.Q)) {
-            if (!pressedQ) {
-                pressedQ = true;
-                CURSOR_SELEC_X_BATTLE_MAIN -= 10;
-                System.err.println("Changed x,y offsets to " + CURSOR_SELEC_X_BATTLE_MAIN + ", " + CURSOR_SELEC_X_BATTLE_MAIN);
-            }
-        }
-        else pressedQ = false;
-
-        if (Gdx.input.isKeyPressed(Input.Keys.E)) {
-            if (!pressedE) {
-                pressedE = true;
-                CURSOR_SELEC_X_BATTLE_MAIN += 10;
-                System.err.println("Changed x,y offsets to " + CURSOR_SELEC_X_BATTLE_MAIN + ", " + CURSOR_SELEC_X_BATTLE_MAIN);
-            }
-        }
-        else pressedE = false;
-
-        if (Gdx.input.isKeyPressed(Input.Keys.Z)) {
-            if (!pressedZ) {
-                pressedZ = true;
-                CURSOR_SELEC_Y_BATTLE_MAIN -= 10;
-                System.err.println("Changed x,y offsets to " + CURSOR_SELEC_X_BATTLE_MAIN + ", " + CURSOR_SELEC_X_BATTLE_MAIN);
-            }
-        }
-        else pressedZ = false;
-
-        if (Gdx.input.isKeyPressed(Input.Keys.X)) {
-            if (!pressedX) {
-                pressedX = true;
-                CURSOR_SELEC_Y_BATTLE_MAIN += 10;
-                System.err.println("Changed x,y offsets to " + CURSOR_SELEC_X_BATTLE_MAIN + ", " + CURSOR_SELEC_X_BATTLE_MAIN);
-            }
-        }
-        else pressedX = false;
-        */
-
 
         // handle cursor selection in main menu
         if (s == states.MAINMENU) {
@@ -526,6 +589,66 @@ public class MenuHandler {
 
                 }
             } else keysPressed[RIGHT] = 0;
+
+            // set cursor point
+            cursorPoint.x = player.getX() + CURSOR_OFFSET_X_BATTLE_MAIN;
+            cursorPoint.y = player.getY() + CURSOR_OFFSET_Y_BATTLE_MAIN;
+
+            if ( cursorSelection == 1 || cursorSelection == 3 ) cursorPoint.x += CURSOR_SELEC_X_BATTLE_MAIN;
+            if ( cursorSelection == 2 || cursorSelection == 3 ) cursorPoint.y += CURSOR_SELEC_Y_BATTLE_MAIN;
+
+
+        }
+        else if ( battleHandler.getBattleState() == BattleHandler.battleStates.SPELL ) {
+
+            int tempChoice = cursorSelection;
+
+            // UP
+            if (Gdx.input.isKeyPressed(Input.Keys.W)) {
+
+                if (keysPressed[UP] == 0) {
+                    keysPressed[UP] = 1;
+
+                    tempChoice -= 2;
+
+                }
+            } else keysPressed[UP] = 0;
+
+            // DOWN
+            if (Gdx.input.isKeyPressed(Input.Keys.S)) {
+
+                if (keysPressed[DOWN] == 0) {
+                    keysPressed[DOWN] = 1;
+
+                    tempChoice += 2;
+
+                }
+            } else keysPressed[DOWN] = 0;
+
+            // LEFT
+            if (Gdx.input.isKeyPressed(Input.Keys.A)) {
+
+                if (keysPressed[LEFT] == 0) {
+                    keysPressed[LEFT] = 1;
+
+                    tempChoice -= 1;
+
+                }
+            } else keysPressed[LEFT] = 0;
+
+            // RIGHT
+            if (Gdx.input.isKeyPressed(Input.Keys.D)) {
+
+                if (keysPressed[RIGHT] == 0) {
+                    keysPressed[RIGHT] = 1;
+
+                    tempChoice += 1;
+
+                }
+            } else keysPressed[RIGHT] = 0;
+
+            if ( tempChoice >= 0 && tempChoice < player.getSpells().size() )
+                cursorSelection = tempChoice;
 
             // set cursor point
             cursorPoint.x = player.getX() + CURSOR_OFFSET_X_BATTLE_MAIN;

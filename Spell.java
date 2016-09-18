@@ -7,29 +7,33 @@ package gharib.leonar.summoner;
 public class Spell {
 
    private int damage;
-   private int speedcost;
+   private int energycost;
    private int magiccost;
    private String name;
+   private int spellID;
 
    private boolean onCooldown;
    private int ticksPassed;
 
-   public Spell(String n, int dmg, int mgc, int spdc ){
+   public Spell(String n, int dmg, int mgc, int engc, int spellID ){
       name = n;
       damage = dmg;
       magiccost = mgc;
-      speedcost = spdc;
+      energycost = engc;
+      this.spellID = spellID;
 
       onCooldown = false;
    }
+   public int getSpellID() { return spellID; }
+   public int getMagicCost() { return magiccost; }
    public String getName(){
       return name;
    }
    public int getDamage(){
       return damage;
    }
-   public int getSpeedCost(){
-      return speedcost;
+   public int getEnergyCost(){
+      return energycost;
    }
    public boolean isOnCooldown(){
       return onCooldown;

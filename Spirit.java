@@ -10,6 +10,8 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 */
 public class Spirit {
 
+   private static int ATK_COST = 10;
+
    private int permStrength;
    private int permMana;
    private int permHealth;
@@ -23,6 +25,7 @@ public class Spirit {
    private int defense;
    private int energy;
    private int maxEnergy;
+   private int manaRegen;
 
    private int atkcost;
 
@@ -33,6 +36,7 @@ public class Spirit {
    private Sprite sprite;
 
    private boolean flipped;
+   private boolean flopped;
 
    private Spell spell;
 
@@ -57,22 +61,40 @@ public class Spirit {
       sprite = new Sprite(new Texture(Gdx.files.internal("data/monsters/blue1.png")));
 
       flipped = false;
+      flopped = false;
 
-      atkcost = 10;
+      manaRegen = 5;
+   }
 
-      spell = new Spell("Bolt", 15, 10, 20);
-   }
-   public Spell getSpell(){
-      return spell;
-   }
    public boolean getFlipped() { return flipped; }
+   public boolean getFlopped() { return flopped; }
+
    public void flip(){
       flipped = true;
       sprite.flip(true,false);
    }
 
+   public void unFlop(boolean enemy){
+      if ( enemy )
+         sprite.rotate(270);
+      else
+         sprite.rotate(90);
+   }
+
+   public void flop(boolean enemy){
+      if ( enemy ) {
+         sprite.rotate(90);
+      }
+      else
+         sprite.rotate(270);
+
+      flopped = true;
+   }
+
+   public int getDefense(){ return defense; }
+   public int getMana(){ return mana; }
    public int getAtkCost(){
-      return atkcost;
+      return ATK_COST;
    }
 
    public int getEnergy(){
@@ -87,18 +109,6 @@ public class Spirit {
       return sprite;
    }
 
-   public boolean cost(int spellIndex){
-      int c = 0;
-      // cost for normal attack
-      if(spellIndex == 0){
-         c = 10;
-      }
-
-      if ( energy < c ) return false;
-
-      energy -= c;
-      return true;
-   }
    public void setName(String n){
       name = n;
    }
@@ -110,15 +120,30 @@ public class Spirit {
       return health;
    }
    public int getMaxHP() { return permHealth; }
+   public void setHP(int hp){
+      this.health = hp;
+   }
+   public int getMaxMana(){ return permMana; }
 
    public int getAttackDamage(){
       return strength;
    }
 
+   public void loseMana(int m){
+      mana -= m;
+   }
+   public void loseEnergy(int e){
+      energy -= e;
+   }
+
+   public void takeDamage(int amt){
+      health -= amt;
+   }
+
    public void attackedBy(Spirit s){
 
       // normal attack is spell id 0
-      if ( s.cost(0) ) {
+      if ( energy > ATK_COST ) {
 
          int diff = defense - s.strength;
          if (diff < 0) health += diff;
@@ -137,9 +162,26 @@ public class Spirit {
       energy = 0;
    }
 
+   public void gainHP(int amt){
+      health += amt;
+      if ( health > permHealth ) health = permHealth;
+   }
+   public void gainMP(int amt){
+      mana += amt;
+      if ( mana > permMana ) mana = permMana;
+   }
+   public void gainEnergy(int amt){
+      energy += amt;
+      if ( energy > permMaxEnergy ) energy = permMaxEnergy;
+   }
+
    public void regenEnergy(){
       energy += speed;
       if ( energy > maxEnergy ) energy = maxEnergy;
+   }
+   public void regenMana(){
+      mana += manaRegen;
+      if ( mana > permMana ) mana = permMana;
    }
 
 
