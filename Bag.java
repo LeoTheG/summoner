@@ -9,7 +9,8 @@ import java.util.ArrayList;
 public class Bag {
 
    private Player player;
-   private ArrayList<Item> items;
+   //private ArrayList<Item> items;
+   int[] items;
 
    public enum type {
       POTION, BERRY
@@ -17,12 +18,19 @@ public class Bag {
    public enum identifier {
       RED
    }
+   private static int TOTAL_NUM_ITEMS = 1;
 
    public Bag(Player p){
       player = p;
-      items = new ArrayList<Item>();
+      items = new int[TOTAL_NUM_ITEMS];
+
+      //items = new ArrayList<Item>();
    }
+   /*
    public void addItem(type t, identifier id){
+
+      System.err.println("Adding item to bag of size " + items.length );
+
       if ( t == type.POTION ) {
 
          if ( id == identifier.RED ) {
@@ -40,7 +48,19 @@ public class Bag {
 
 
       }
+      System.err.println("Added item to bag now of size " + items.length );
    }
+   */
+   public int getNumTotalItems(){
+      return TOTAL_NUM_ITEMS;
+   }
+   public void addItem(int ID){
+
+      System.err.println("Incrementing count of item with ID " + ID + " to " + items[ID] + 1);
+      items[ID]++;
+
+   }
+   /*
    public void useItem(int index, Spirit s){
       if ( index >= 0 && index < items.size() ) {
          Item i = items.remove(index);
@@ -48,26 +68,58 @@ public class Bag {
          i.use(s);
       }
    }
-   public int getNumItems(){
-      return items.size();
+   */
+   public Item getItem(int ID){
+      switch(ID){
+         case 0:
+            return new Berry(identifier.RED);
+      }
+      return null;
    }
+   public void useItem(int index, Spirit s){
+      if ( index >= 0 && index < items.length ) {
+         Item i = getItem(items[index]);
+
+         i.use(s);
+      }
+   }
+   public int getNumItems(){
+      return items.length;
+   }
+   /*
    public ArrayList<Item> getItems(){
       return items;
+   }
+   */
+   public int[] getItems(){
+      return items;
+   }
+
+   public String getItemName(int ID){
+      switch (ID){
+         case 0:
+            return "Red Berry";
+      }
+      return "";
    }
 
 }
 
 abstract class Item {
 
+   protected String name;
+   protected int count = 0;
+
    public abstract boolean use(Spirit s);
    public abstract String getName();
    public abstract void setName(String s);
+   public abstract int getCount();
+   public abstract void incCount();
+   public abstract void decCount();
 
 }
 
 class Potion extends Item {
-
-   private String name;
 
    int hp_restore;
    int mp_restore;
@@ -99,11 +151,18 @@ class Potion extends Item {
    public void setName(String str){
       name = str;
    }
+   public int getCount(){
+      return count;
+   }
+   public void incCount(){
+      count++;
+   }
+   public void decCount(){
+      count--;
+   }
 }
 
 class Berry extends Item {
-
-   private String name;
 
    public Berry(Bag.identifier id){
 
@@ -122,5 +181,14 @@ class Berry extends Item {
    }
    public void setName(String str){
       name = str;
+   }
+   public int getCount(){
+      return count;
+   }
+   public void incCount(){
+      count++;
+   }
+   public void decCount(){
+      count--;
    }
 }

@@ -38,6 +38,7 @@ public class MenuHandler {
     private Sprite mainMenuBox = new Sprite(new Texture(Gdx.files.internal("data/UI/menu-box.png")));
     private Sprite cursor = new Sprite(new Texture(Gdx.files.internal("data/UI/cursor.png")));
     private Sprite cursorBattle = new Sprite(new Texture(Gdx.files.internal("data/UI/cursor.png")));
+    private Sprite packBox = new Sprite(new Texture(Gdx.files.internal("data/UI/pack-box.png")));
 
     private Player player;
 
@@ -64,6 +65,9 @@ public class MenuHandler {
     // battle main text
     private static int BATTLE_MAIN_XOFFSET = -250;
     private static int BATTLE_MAIN_YOFFSET = -170;
+    // pack text
+    private static int PACK_XOFFSET = -150;
+    private static int PACK_YOFFSET = 250;
     // enemy sprite and player sprite offsets
     private static int MONSTER_PLAYER_SPRITE_XOFFSET = 136;
     private static int MONSTER_PLAYER_SPRITE_YOFFSET = 45;
@@ -103,6 +107,7 @@ public class MenuHandler {
         // properly scale menu items
         textBox.setScale(6.5f, 3.5f);
         mainMenuBox.setScale(3.5f, 2f);
+        packBox.setScale(4.5f, 4f);
         cursor.setScale(0.2f, 0.2f);
         cursorBattle.setScale(0.5f,0.5f);
 
@@ -186,18 +191,14 @@ public class MenuHandler {
 
         int objectID = world.getCurrentMap().getObjectID(adjustedX, adjustedY);
 
-        // IDs > -1 indicate object
-        if ( objectID > -1 ) {
-            player.getItem(objectID);
-            return;
-        }
-
-        if (npc == null) {
-            setChat("");
-            return;
-        }
-
         if (s == states.FREE) {
+
+            // IDs > -1 indicate object
+            if ( objectID > -1 ) {
+                System.err.println("Adding berry");
+                player.getItem(objectID);
+                return;
+            }
 
             setChat(npc.getChat(true));
             if (currentChat.length() == 0) return;
@@ -205,6 +206,10 @@ public class MenuHandler {
             s = states.CHATTING;
             setNewChat(true);
 
+        }
+        else if (npc == null) {
+            setChat("");
+            return;
         }
         else if (s == states.CHATTING) {
             s = states.INCHAT;
@@ -274,6 +279,9 @@ public class MenuHandler {
             sprites.remove(cursor);
             cursorSelection = 0;
         }
+        else if ( s == states.PACK ) {
+            changeState(states.FREE);
+        }
 
     }
 
@@ -313,7 +321,12 @@ public class MenuHandler {
             } else if (arrs[i] == mainMenuBox) {
                 mainMenuBox.setX(player.getX() + mainMenuBox.getWidth() / 2 + 182);
                 mainMenuBox.setY(player.getY() + 170);
-            } else if (arrs[i] == cursor) {
+            }
+            else if ( arrs[i] == packBox) {
+                packBox.setX(player.getX() + packBox.getWidth() / 2 - 50);
+                packBox.setY(player.getY() - 70);
+            }
+            else if (arrs[i] == cursor) {
                 cursor.setX(cursorPoint.x);
                 cursor.setY(cursorPoint.y);
             }
@@ -341,6 +354,60 @@ public class MenuHandler {
         if ( str == null ) currentChat = "";
 
         currentChat = str;
+    }
+
+    public void drawPackText(Batch b, BitmapFont f, BitmapFont grayFont) {
+
+        /* TODO: add update system to check if "items" has to be changed or not (so it's not changed every time)
+        /        can be done through boolean check */
+        //ArrayList<Item> items = player.getBag().getItems();
+        int[] items = player.getBag().getItems();
+
+        for( int i = 0; i < items.length; i++ ) {
+
+            int x = player.getX() + PACK_XOFFSET;
+            int y = player.getY() + PACK_YOFFSET;
+
+            int countX = player.getX() + PACK_XOFFSET + 340;
+
+            f.draw(b, player.getBag().getItemName(i), x, y - (i * 30));
+            f.draw(b, "x" + items[i], countX, y - (i * 30));
+
+
+            /*
+            if ( battleHandler.getFlagEndBattle() ) {
+                f.draw(b, battleHandler.getMainText()[0], x, y);
+            }
+            else {
+
+                if (i == 1 || i == 3) x += 380;
+                if (i == 2 || i == 3) y += -97;
+
+                if (i == 0) {
+                    if (battleHandler.getPlayerEnergy() < battleHandler.getPlayerAtkCost()) {
+                        grayFont.draw(b, battleHandler.getMainText()[0], x, y);
+                    } else {
+                        f.draw(b, battleHandler.getMainText()[0], x, y);
+                    }
+                }
+                else if ( i == 2 ) {
+                    if ( player.getBag().getNumItems() > 0 ) {
+                        f.draw(b, battleHandler.getMainText()[2], x, y);
+                    }
+                    else{
+                        grayFont.draw(b, battleHandler.getMainText()[2], x, y);
+                    }
+                }
+                // RUN should be grayed out at certain times
+                else
+                    f.draw(b, battleHandler.getMainText()[i], x, y);
+
+
+
+            }
+            */
+
+        }
     }
 
     public void drawBattleMainText(Batch b, BitmapFont f, BitmapFont grayFont){
@@ -404,6 +471,23 @@ public class MenuHandler {
         return previousPoint;
     }
 
+    public void changeState(states state){
+
+        if ( s == states.PACK ) {
+            sprites.remove(packBox);
+        }
+
+        s = state;
+
+        if ( s == states.PACK ) {
+            System.err.println("Adding packBox");
+            sprites.remove(mainMenuBox);
+            sprites.remove(cursor);
+
+            sprites.add(packBox);
+        }
+    }
+
     /**
      * Handles menu and cursor depending on keyboard input
      */
@@ -416,18 +500,17 @@ public class MenuHandler {
 
                 pressedSpace = true;
 
-                // SAVE option
                 if ( getState() == states.MAINMENU ) {
 
                     // PACK
                     if ( cursorSelection == 0 ) {
-                        s = states.PACK;
+                        changeState(states.PACK);
                     }
                     // SPIRITS
                     else if ( cursorSelection == 1) {
 
                     }
-
+                    // SAVE
                     else if ( cursorSelection == 3 ) {
                         System.err.println("Saving game");
                         pref.putInteger("playerX", player.getX());
@@ -510,6 +593,12 @@ public class MenuHandler {
         }
          else pressedSpace = false;
 
+        /* Individual state handling below */
+
+        if ( s == states.PACK ) {
+
+        }
+
         // handle cursor selection in main menu
         if (s == states.MAINMENU) {
 
@@ -521,7 +610,6 @@ public class MenuHandler {
 
                     if (cursorSelection != 0) {
                         cursorSelection--;
-                        System.err.println("Reducing cursorSelection to " + cursorSelection);
                     }
                 }
             } else keysPressed[UP] = 0;
@@ -534,7 +622,6 @@ public class MenuHandler {
 
                     if (cursorSelection != 3) {
                         cursorSelection++;
-                        System.err.println("Increasing cursorSelection to " + cursorSelection);
                     }
                 }
             } else keysPressed[DOWN] = 0;

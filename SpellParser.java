@@ -38,12 +38,10 @@ public class SpellParser {
    }
 
    public Spell getSpell(int spellID){
-      System.err.println("~~~~~~~~~~Called getSpell");
       return spells.get(spellID);
    }
    private void parse(){
-      System.err.println("~~~~~~~~~~Called parse");
-// read line-by-line
+      // read line-by-line
       String line;
 
       int i = 0;
@@ -87,27 +85,27 @@ public class SpellParser {
                case 1:
                   pos = line.indexOf(ID) + ID.length();
                   spellID = Integer.parseInt(line.substring(pos));
-                  System.err.println("spellID: " + spellID);
+                  //System.err.println("spellID: " + spellID);
                   break;
                case 2:
                   pos = line.indexOf(NAME) + NAME.length();
                   spellName = line.substring(pos);
-                  System.err.println("spell name: " + spellName);
+                  //System.err.println("spell name: " + spellName);
                   break;
                case 3:
                   pos = line.indexOf(DAMAGE) + DAMAGE.length();
                   spellDamage = Integer.parseInt(line.substring(pos));
-                  System.err.println("spell damage: " + spellDamage);
+                  //System.err.println("spell damage: " + spellDamage);
                   break;
                case 4:
                   pos = line.indexOf(ENERGYCOST) + ENERGYCOST.length();
                   energyCost = Integer.parseInt(line.substring(pos));
-                  System.err.println("energy cost: " + energyCost);
+                  //System.err.println("energy cost: " + energyCost);
                   break;
                case 5:
                   pos = line.indexOf(MAGICCOST) + MAGICCOST.length();
                   magicCost = Integer.parseInt(line.substring(pos));
-                  System.err.println("magic cost: " + magicCost);
+                  //System.err.println("magic cost: " + magicCost);
                   break;
             }
             // after last line for Spell, create Spell object and add to spells
@@ -116,7 +114,7 @@ public class SpellParser {
                Spell spell = new Spell(spellName,spellDamage,magicCost,energyCost,spellID);
 
                spells.add(spell);
-               System.err.println("Added spell with ID: " + spellID);
+               //System.err.println("Added spell with ID: " + spellID);
 
             }
          }

@@ -235,6 +235,9 @@ public class SummonerGame extends ApplicationAdapter {
             textDrawLength = text.length();
             mmFont.draw(batch, text.substring(0, (int) textDrawLength), player.getX() + MAINMENUOFFSET_X, player.getY() + MAINMENUOFFSET_Y);
         }
+        else if ( menuState == MenuHandler.states.PACK ) {
+            menuHandler.drawPackText(batch, font, grayFont);
+        }
         // draw one character at a time for beginning battle text
         else if (battleState == BattleHandler.battleStates.BEG ){
 

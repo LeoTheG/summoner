@@ -76,7 +76,6 @@ public class Player {
         x = prefs.getInteger("playerX", 1 * TILE_LENGTH);
         y = prefs.getInteger("playerY", 1 * TILE_LENGTH);
 
-        System.err.println("Save x,y = " + x + ", " + y);
        // x = 64;
        //y = 64;
         direction = prefs.getInteger("playerDirection");
@@ -542,11 +541,8 @@ public class Player {
 
     // TODO: Add search/list of objects referenced with ID
     public boolean getItem(int objectID){
-        if ( objectID == 0 ) {
-            bag.addItem(Bag.type.BERRY, Bag.identifier.RED);
-            return true;
-        }
-        return false;
+        bag.addItem(objectID);
+        return true;
     }
     public int getMapX(){
         return x / TILE_LENGTH;
